@@ -17,7 +17,7 @@
 
 		// these must match the server's configuration options
 		var host = window.location.host || "yourserver.com",
-			tokenPath = "/socket/token", // append any extra query parameters here
+			tokenPath = "/socket/token?a=b",
 			socketPrefix = "/sockets";
 
 		var socket = new $.TokenSocket(host, tokenPath, socketPrefix);
