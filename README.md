@@ -1,0 +1,70 @@
+<h1>TokenSocket jQuery Client</h1>
+<p>
+	The client library for node-token-sockjs. Provides extra websocket functionality on top of sockjs.
+</p>
+<p>
+	<a href="https://github.com/azuqua/node-token-sockjs">Node Token Sockjs Server</a>
+</p>
+<h3>Currently supported</h3>
+<ul>
+	<li>Token authentication</li>
+	<li>RPC abstraction</li>
+	<li>Channel publish-subscribe</li>
+</ul>
+<h1>Usage</h1>
+<pre>
+	(function($){
+
+		// these must match the server's configuration options
+		var host = window.location.host || "yourserver.com",
+			tokenPath = "/socket/token", // append any extra query parameters here
+			socketPrefix = "/sockets";
+
+		var socket = new $.TokenSocket(host, tokenPath, socketPrefix);
+		
+		// once the socket has been authenticated
+		socket.ready(function(error){
+			if(error){
+				console.log("Error creating websocket", error);
+			}else{
+				
+				// issue a rpc command
+				// these call the corresponding action on the server's socket controller
+				socket.rpc("someRPCFunction", { foo: "bar" }, function(error, resp){
+					console.log("Server responded: ", error, resp);
+				});
+
+				// if the server has pub/sub enabled
+				socket.subscribe("channel1");
+		
+				// when messages arrive
+				socket.onmessage(function(channel, message){
+					console.log("Got message ", channel, message);
+				});
+
+				// list channels for this socket
+				console.log("Channels: ", socket.channels());
+
+				// publish a message
+				socket.publish("channel1", { foo: "bar" });
+
+				// publish a message on all channels, not just this socket's channels
+				socket.broadcast({ foo: "bar" });
+
+				// leave a channel
+				socket.unsubscribe("channel1");
+
+				// close the socket
+				socket.end(function(){
+					console.log("Socket closed");
+				});
+
+			}
+		});
+
+	}(jQuery))
+</pre>
+<h3>TODO</h3>
+<ul>
+	<li>Custom events with https://github.com/Wolfy87/EventEmitter</li>
+</ul>
