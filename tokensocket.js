@@ -52,7 +52,6 @@
 		if(!self.ready)
 			self.ready = function(){};
 		self.channels = {};
-		self.messageCallback = null;
 		self.apiRoute = window.location.protocol + "//" + (host || window.location.host);
 		self.socketPrefix = socketPrefix || "/sockets";
 		self.tokenPath = tokenPath;
