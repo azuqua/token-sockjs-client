@@ -42,16 +42,27 @@
 			else
 				fn(null, data.resp);
 			delete this.inTransit[data.rpc][data.uuid];
-		}else{
+		}else if(this.messageCallback){
 			this.messageCallback(data.channel, data.message);
 		}
+	};
+
+	var handleInternal = function(instance, command, data){
+		switch(command){
+			case "subscribe":
+				instance._channels[data.channel] = true;
+			break;
+			case "unsubscribe":
+				delete instance._channels[data.channel];
+			break;
+		};
 	};
 
 	var TokenSocket = function(host, tokenPath, socketPrefix){
 		var self = this;
 		if(!self.ready)
 			self.ready = function(){};
-		self.channels = {};
+		self._channels = {};
 		self.apiRoute = window.location.protocol + "//" + (host || window.location.host);
 		self.socketPrefix = socketPrefix || "/sockets";
 		self.tokenPath = tokenPath;
@@ -81,7 +92,10 @@
 			self.monitor = new Monitor(self.socket);
 			self.socket.onmessage = function(e){
 				e.data = JSON.parse(e.data);
-				self.monitor.handleResponse(e.data);
+				if(e.data.internal)
+					handleInternal(self, e.data.command, e.data.data);
+				else	
+					self.monitor.handleResponse(e.data);
 			};
 		});
 		request.fail(function(xhr, status, error){
@@ -94,7 +108,7 @@
 	};
 
 	TokenSocket.prototype.channels = function(){
-		return Object.keys(this.channels);
+		return Object.keys(this._channels);
 	};
 
 	// @rpc is the controller action
@@ -106,7 +120,7 @@
 	};
 
 	TokenSocket.prototype.subscribe = function(channel){
-		this.channels[channel] = true;
+		this._channels[channel] = true;
 		this.monitor.sendMessage({
 			rpc: "_subscribe",
 			req: { channel: channel }
@@ -114,7 +128,7 @@
 	};
 
 	TokenSocket.prototype.unsubscribe = function(channel){
-		delete this.channels[channel];
+		delete this._channels[channel];
 		this.monitor.sendMessage({
 			rpc: "_unsubscribe",
 			req: { channel: channel }
