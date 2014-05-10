@@ -99,7 +99,7 @@
 			};
 		});
 		request.fail(function(xhr, status, error){
-			self.ready(new Error(err || "Error creating websocket connection!"));
+			self.ready(new Error(error || "Error creating websocket connection!"));
 		});
 	};
 
