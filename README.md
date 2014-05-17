@@ -5,11 +5,11 @@
 <p>
 	<a href="https://github.com/azuqua/node-token-sockjs">Node Token Sockjs Server</a>
 </p>
-<h3>Currently supported</h3>
+<h3>Supported</h3>
 <ul>
 	<li>Token authentication</li>
 	<li>RPC abstraction</li>
-	<li>Channel publish-subscribe</li>
+	<li>Publish - Subscribe</li>
 </ul>
 <h1>Usage</h1>
 <pre>
@@ -64,7 +64,3 @@
 
 	}(jQuery))
 </pre>
-<h3>TODO</h3>
-<ul>
-	<li>Custom events with https://github.com/Wolfy87/EventEmitter</li>
-</ul>
