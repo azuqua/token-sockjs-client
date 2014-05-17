@@ -60,8 +60,8 @@
 
 	var TokenSocket = function(host, tokenPath, socketPrefix){
 		var self = this;
-		if(!self.ready)
-			self.ready = function(){};
+		if(!self._ready)
+			self._ready = function(){};
 		self._channels = {};
 		self.apiRoute = window.location.protocol + "//" + (host || window.location.host);
 		self.socketPrefix = socketPrefix || "/sockets";
@@ -75,7 +75,7 @@
 		var request = $.ajax(opts);
 		request.done(function(resp){
 			if(!resp.token)
-				return self.ready(new Error("No token found!"));
+				return self._ready(new Error("No token found!"));
 			self.token = resp.token;
 			self.socket = new SockJS(self.apiRoute + self.socketPrefix);
 			self.socket.onopen = function(){
@@ -84,9 +84,9 @@
 					token: self.token
 				}, function(error, resp){
 					if(error)
-						self.ready(error);
+						self._ready(error);
 					else
-						self.ready(null, true)
+						self._ready(null, true)
 				});
 			};
 			self.monitor = new Monitor(self.socket);
@@ -99,12 +99,12 @@
 			};
 		});
 		request.fail(function(xhr, status, error){
-			self.ready(new Error(error || "Error creating websocket connection!"));
+			self._ready(new Error(error || "Error creating websocket connection!"));
 		});
 	};
 
 	TokenSocket.prototype.ready = function(callback){
-		this.ready = callback;
+		this._ready = callback;
 	};
 
 	TokenSocket.prototype.channels = function(){
