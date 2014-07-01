@@ -29,9 +29,13 @@
 			}else{
 				
 				// issue a rpc command
-				// these call the corresponding action on the server's socket controller
-				socket.rpc("someRPCFunction", { foo: "bar" }, function(error, resp){
+				socket.rpc("something", { foo: "bar" }, function(error, resp){
 					console.log("Server responded: ", error, resp);
+				});
+	
+				// issue a rpc command to a nested controller
+				socket.rpc("nested.more.echo", { foo: "bar" }, function(error, resp){
+					console.log("Nested rpc call: ", error, resp);
 				});
 
 				// if the server has pub/sub enabled
