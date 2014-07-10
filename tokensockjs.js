@@ -3,7 +3,7 @@
 	if(!window.SockJS){
 		var script = document.createElement("script");
 		script.type = "text/javascript";
-		script.src = "//cdn.sockjs.org/sockjs-0.3.min.js";
+		script.src = "//cdnjs.cloudflare.com/ajax/libs/sockjs-client/0.3.4/sockjs.min.js";
 		$("head").append(script);
 	}
  
