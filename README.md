@@ -5,12 +5,6 @@
 <p>
 	<a href="https://github.com/azuqua/node-token-sockjs">Node Token Sockjs Server</a>
 </p>
-<h3>Supported</h3>
-<ul>
-	<li>Token authentication</li>
-	<li>RPC abstraction</li>
-	<li>Publish - Subscribe</li>
-</ul>
 <h1>Usage</h1>
 <pre>
 	(function($){
