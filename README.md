@@ -1,3 +1,21 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <h1>TokenSocket jQuery Client</h1>
 <p>
 	The client library for node-token-sockjs. Provides extra websocket functionality on top of sockjs.
