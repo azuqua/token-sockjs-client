@@ -1,0 +1,43 @@
+{
+  "name": "token-sockjs-client",
+  "version": "1.0.0",
+  "description": "Client libraries for Node-Token-Sockjs server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/azuqua/token-sockjs-client"
+  },
+  "keywords": [
+    "azuqua",
+    "ws",
+    "websocket",
+    "token",
+    "rpc",
+    "publish",
+    "subscribe",
+    "pub-sub",
+    "sockjs"
+  ],
+  "author": "Alec Embke <alec@azuqua.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/azuqua/token-sockjs-client/issues"
+  },
+  "homepage": "https://github.com/azuqua/token-sockjs-client",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-clean": "^0.6.0",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-uglify": "^0.6.0"
+  },
+  "dependencies": {
+    "async": "^0.9.0",
+    "lodash": "^2.4.1",
+    "node-uuid": "^1.4.1",
+    "restjs": "azuqua/restjs",
+    "sockjs-client-ws": "^0.1.0"
+  }
+}
