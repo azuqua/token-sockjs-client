@@ -1,5 +1,5 @@
 
-var _      = require("lodash"),
+var _    = require("lodash"),
   async  = require("async"),
   uuid   = require("node-uuid"),
   WS     = require("sockjs-client-ws"),
