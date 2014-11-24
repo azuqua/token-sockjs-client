@@ -1,3 +1,4 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 ;(function(global){
  
 	var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -17,10 +18,11 @@
 	Monitor.prototype.sendMessage = function(data, callback){
 		if(typeof data === "string")
 			data = JSON.parse(data);
-		data.uuid = uuid();
+		var _uuid = uuid();
+		data.uuid = _uuid;
 		if(!this._inTransit[data.rpc])
 			this._inTransit[data.rpc] = {};
-		this._inTransit[data.rpc][data.uuid] = callback;
+		this._inTransit[data.rpc][_uuid] = callback;
 		this._socket.send(JSON.stringify(data));
 	};
  
@@ -28,7 +30,7 @@
 		var fn = null;
 		if(data.rpc && data.uuid)
 			fn = this._inTransit[data.rpc][data.uuid];
-		if(fn && typeof fn === "function"){
+		if(fn){
 			if(data.error)
 				fn(data.error);
 			else
@@ -72,8 +74,8 @@
 	};
 
 	var formEncode = function(obj, prefix) {
-		var prop, out = [];
-		for(prop in obj){
+		var out = [];
+		for(var prop in obj){
 			if(!obj.hasOwnProperty(prop))
 				continue;
 			var key = prefix ? prefix + "[" + prop + "]" : prop, 
@@ -84,7 +86,7 @@
 	};
 
 	var request = function(options, data, callback){
-		if(options.dataType && options.dataType.toLowerCase() === "jsonp"){
+		if(options.dataType && options.dataType.toLowerCase() === "jsonp") {
 			var callbackKey = "token_callback_" + new Date().getTime() + "_" + (Math.round(Math.random() * 1e16)).toString(36);
 			var script = global.document.createElement("script");
 			global[callbackKey] = function(resp) {
@@ -114,7 +116,7 @@
 			xhr.open(options.method, options.url, true);
 			xhr.onreadystatechange = function(){
 				if(xhr.readyState === 4){
-					var msg = xhr.target ? xhr.target.responseText : xhr.responseText;
+					var msg = xhr.target ? xhr.target.responseText : null;
 					try{
 						msg = JSON.parse(msg);
 					}catch(ev){}
@@ -140,7 +142,6 @@
 			tokenSocket._token = resp.token;
 			tokenSocket._socket = new global.SockJS(tokenSocket._apiRoute + tokenSocket._socketPrefix, null, tokenSocket._sockjs);
 			tokenSocket._socket.onopen = function(){
-				console.log("opened !!");
 				tokenSocket._monitor.sendMessage({
 					rpc: "auth",
 					token: tokenSocket._token
@@ -197,10 +198,10 @@
 		self._closed = true;
 		if(!options)
 			options = {};
-		if(!self._ready || options.ready)
-			self._ready = options.ready || function(){};
-		if(!self._onreconnect || options.onreconnect)
-			self._onreconnect = options.onreconnect || function(){};
+		if(!self._ready)
+			self._ready = function(){};
+		if(!self._onreconnect)
+			self._onreconnect = function(){};
 		if(!options.host)
 			options.host = global.location.host;
 		self._reconnect = typeof options.reconnect === "undefined" ? true : options.reconnect;
@@ -306,4 +307,89 @@
  
 	global.TokenSocket = TokenSocket;
  
-}(typeof window === "undefined" ? {} : window));
+}(window));
+
+},{}],2:[function(require,module,exports){
+/*jslint browser: true */
+
+(function(global){
+
+	global.unitTests = function(){
+
+		describe("Unit tests", function(){
+
+			before(function(){
+				global.mockWindow.init();
+				global.mockServer.init();
+
+				// let mocks override globals first
+				require("../../clients/client/tokensockjs.js");
+			});
+
+			after(function(){
+				global.mockWindow.end();
+				global.mockServer.end();
+			});
+
+			describe("Initialization unit tests", function(){
+
+				it("Should not throw an error when created with valid options", function(){
+					assert.doesNotThrow(function(){
+						new TokenSocket();
+						global.mockServer._requests[0].respond(200, { "Content-Type": "application/json" }, JSON.stringify({ token: "123" }));
+						global.mockServer._requests.pop();
+					}, "Constructor does not throw when called without arguments");
+					assert.doesNotThrow(function(){
+						new TokenSocket({
+							host: "foo",
+							ready: function(){},
+							onreconnect: function(){},
+							reconnect: false,
+							sockjs: {},
+							socketPrefix: "/foo",
+							tokenPath: "/foo/bar",
+							authentication: {}
+						}, 
+						{
+							foo: function(){}	
+						});
+						global.mockServer._requests[0].respond(200, { "Content-Type": "application/json" }, JSON.stringify({ token: "123" }));
+						global.mockServer._requests.pop();
+					}, "Constructor does not throw when provided all possible arguments");
+				});
+
+				it("Should allow for protocol overrides", function(){
+
+					// test options after passing it in (use the fact that it modifies it...)
+
+				});
+
+				it("Should correctly infer protocols", function(){
+
+
+
+				});
+
+				it("Should correctly form encode JSON objects", function(){
+
+
+				});
+
+			});
+
+		});
+
+		describe("Exports unit tests", function(){
+
+
+
+
+
+
+		});
+
+	};
+
+}(window));
+
+},{"../../clients/client/tokensockjs.js":1}]},{},[2]);

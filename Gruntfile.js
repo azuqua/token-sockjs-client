@@ -24,8 +24,7 @@ module.exports = function(grunt){
         },
 
         browserify: {
-			"test/dependencies/server.mock.browser.js": ["test/dependencies/server.mock.js"],
-			"test/dependencies/testing.browser.js": ["test/dependencies/testing.js"]
+			"test/dependencies/server.mock.browser.js": ["test/dependencies/server.mock.js"]
 		},
 
         mochaTest: {
@@ -34,7 +33,10 @@ module.exports = function(grunt){
         },
 
         mocha_phantomjs: {
-    		all: ["test/client/**/*.html"]
+    		all: [
+    			"test/client/unit.html", 
+    			"test/client/integration.html"
+    		]
   		}
         
 	});
