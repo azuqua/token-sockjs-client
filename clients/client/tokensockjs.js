@@ -130,17 +130,16 @@
 		}
 	};
 
-	var resetConnection = function(tokenSocket, callback){
+	var resetConnection = function(tokenSocket, callbackName){
 		request(tokenSocket._opts, tokenSocket._authentication, function(error, resp){
 			if(error)
-				return callback(error);
+				return tokenSocket[callbackName](error);
 			if(!resp.token)
-				return callback(new Error("No token found!"));
+				return tokenSocket[callbackName](new Error("No token found!"));
 
 			tokenSocket._token = resp.token;
 			tokenSocket._socket = new global.SockJS(tokenSocket._apiRoute + tokenSocket._socketPrefix, null, tokenSocket._sockjs);
 			tokenSocket._socket.onopen = function(){
-				console.log("opened !!");
 				tokenSocket._monitor.sendMessage({
 					rpc: "auth",
 					token: tokenSocket._token
@@ -149,7 +148,7 @@
 						callback(error);
 					}else{
 						delete tokenSocket._closed;
-						callback();
+						tokenSocket[callbackName]();
 						replay(tokenSocket);
 					}
 				});
@@ -167,7 +166,7 @@
 			tokenSocket._socket.onclose = function(){
 				tokenSocket._closed = true;
 				if(tokenSocket._reconnect)
-					resetConnection(tokenSocket, tokenSocket._onreconnect);
+					resetConnection(tokenSocket, "_onreconnect");
 			};
 		});
 	};
@@ -218,7 +217,7 @@
 			dataType: options.host !== global.location.host ? "jsonp" : "json"
 		};
 
-		resetConnection(self, self._ready);
+		resetConnection(self, "_ready");
 	};
 
 	TokenSocket.prototype.ready = function(callback){

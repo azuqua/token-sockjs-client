@@ -6162,14 +6162,13 @@ exports.install = function install(target, now, toFake) {
 		authenticateSocket: function(socket, callback){
 			socket.emit("open");
 			setTimeout(function(){
-				console.log("socket ", socket);
 				var req = socket._frames.shift();
 				if(typeof req === "string")
 					req = JSON.parse(req);
 				req.resp = "success";
 				socket.emit("message", { data: JSON.stringify(req) });
 				if(callback) callback();
-			}, 10);
+			}, 1);
 		},
 
 		socketResponse: function(socket, callback){
@@ -6186,7 +6185,7 @@ exports.install = function install(target, now, toFake) {
 					}
 					socket.emit("message", { data: JSON.stringify(req) });
 				});
-			}, 5);
+			}, 1);
 		}
 
 	};
