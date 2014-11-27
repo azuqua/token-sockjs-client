@@ -71,6 +71,17 @@
 
 				});
 
+				it("Should invoke the user's callback upon an rpc response", function(){
+
+				});
+
+				it("Should map rpc requests to a key -> function map on the actions", function(){
+
+				});
+
+				it("Should map rpc requests to arbitrarily nested key -> function maps on the actions", function(){
+
+				});
 
 			});
 

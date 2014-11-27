@@ -89,30 +89,6 @@
 
 		});
 
-		describe("Connection unit tests", function(){
-
-			it("Should automatically reconnect if specified in config", function(){
-
-
-			});
-
-			it("Should queue requests up when the socket is closed", function(){
-
-
-			});
-
-			it("Should replay requests from the queue when the socket opens", function(){
-
-
-			});
-
-			it("Should implement exponential backoff on reconnection attempts", function(){
-
-
-			});
-
-		});
-
 		describe("Exports unit tests", function(){
 
 			var socket;
