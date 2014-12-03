@@ -1,15 +1,18 @@
 Token Sockjs Clients
 ====================
 
-# Server Client
-
-
-
-
+The client libraries for [node-token-sockjs](https://github.com/azuqua/node-token-sockjs). These modules provide additional websocket functionality on top of [sockjs](https://github.com/sockjs). If required in a node environment this module will export the node.js client library. To access the browser version require the browser client file directly.
 
 # Browser Client
 
-The browser client library for [node-token-sockjs](https://github.com/azuqua/node-token-sockjs). This module provides additional websocket functionality on top of [sockjs](https://github.com/sockjs/sockjs-client) and is designed to run in the browser.  
+The browser client does not require any external dependencies other than [sockjs](https://github.com/sockjs/sockjs-client). 
+
+A minified version can also be directly linked from the Azuqua CDN.
+
+```
+<script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.0.min.js"></script>
+```
 
 ## API Overview
 
@@ -19,11 +22,11 @@ The TokenSocket constructor accepts two objects as arguments, options and action
 
 #### Options
 
-* **host** - The hostname of the server. If the protocol is withheld the socket will attempt to connect with the same protocol used by the browser to fetch the page. The module will fall back to jsonp token requests if necessary.
+* **host** - The hostname of the server. If the protocol is withheld the socket will attempt to connect with the same protocol used by the browser to fetch the page. The module will fall back to jsonp token requests for cross domain requests.
 * **tokenPath** - The URL path used to request a token. This must match the server's configuration.  The default value matches the default value the server uses.
 * **socketPrefix** - The prefix of the routes owned by the sockjs server. This must match the server's configuration. The default value matches the default value the server uses.
 * **reconnect** - Whether or not this module should automatically reconnect if the websocket connection closes. **Default value is true.**
-* **authentication** - Any extra authentication data to be sent to the server upon a token request. The browser will automatically send your cookies.
+* **authentication** - Any extra authentication data to be sent to the server upon a token request. This object will be form encoded and sent as URL parameters. The browser will automatically send your cookies.
 * **sockjs** - [An object containing any valid sockjs configuration changes.](https://github.com/sockjs/sockjs-client#sockjs-class)
 
 #### Actions
@@ -39,7 +42,7 @@ var options = {
 	authentication: {
 		foo: "bar"
 	},
-	// modify sockjs options...
+	// maybe modify sockjs options...
 	sockjs: {
 		transports: ["xhr-polling"]
 	}
@@ -143,4 +146,23 @@ socket.broadcast({ foo: "bar" });
 socket.end(function(){
 	console.log("Socket closed");
 });
+```
+
+# Server Client
+
+The server client is backed by [sockjs-client-ws](https://github.com/steerapi/sockjs-client-node) and will only use the websocket protocol. 
+
+## API Overview
+
+The API surface to the Node.js version is identical to the browser version with a few minor changes. First, the constructor options argument now requires a "host" property set to the hostname of the TokenSocket server. Additionally, the constructor no longer accepts a sockjs configuration object on the options argument. Other than those two initialization changes the functionality is identical to the browser version.
+
+# Build and Test
+
+To tinker with the code or to build minified versions of the browser client run the grunt tasks. This module uses Mocha, Chai, Sinon, and Phantomjs for testing. The default grunt task will clean, lint, test, and minify the included modules.
+
+```
+git clone git@github.com:azuqua/token-sockjs-client
+cd token-sockjs-client
+npm install
+grunt
 ```
