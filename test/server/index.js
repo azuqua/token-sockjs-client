@@ -1,15 +1,13 @@
 
-var proxyquire = require("proxyquire"),
+var proxyquire = require("proxyquire").noPreserveCache(),
 	mocks = require("../mocks/server");
 
-console.log("mocks ,", mocks);
-
-var	TokenSocketServer = proxyquire("../../index", { 
-	"sockjs-client-ws": mocks.WS, 
-	"restjs": mocks.RestJS 
+var	TokenSocket = proxyquire("../../index", { 
+	"restjs": mocks.RestJS,
+	"sockjs-client-ws": mocks.WS
 });
 
-module.exports = describe("Node.js client tests", function(){
-	require("./unit")(TokenSocketServer, mocks);
-	require("./integration")(TokenSocketServer, mocks);
+describe("Node.js client tests", function(){
+	require("./unit")(TokenSocket, mocks);
+	require("./integration")(TokenSocket, mocks);
 });

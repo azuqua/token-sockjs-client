@@ -1,14 +1,13 @@
 
 var _      = require("lodash"),
     async  = require("async"),
+    url    = require("url"),
     uuid   = require("node-uuid"),
     WS     = require("sockjs-client-ws"),
     RestJS = require("restjs"); 
 
-if(RestJS.Rest)
+if(typeof RestJS === "object" && RestJS.Rest)
   RestJS = RestJS.Rest;
-
-console.log("WS AND REST ", WS, RestJS);
 
 var Monitor = function(socket, messageCallback){
   this._socket = socket;
@@ -88,8 +87,8 @@ var formEncode = function(obj, prefix) {
 };
 
 var request = function(client, options, data, callback){
-  options.url += (options.url.indexOf("?") < 0 ? "?" : "&") + formEncode(obj);
-  client.get(options, null, function(error, resp){
+  options.url += (options.url.indexOf("?") < 0 ? "?" : "&") + formEncode(data);
+  client.request(options, null, function(error, resp){
     if(error)
       return callback(error);
     try{
@@ -132,7 +131,7 @@ var resetConnection = function(tokenSocket, callbackName){
       }catch(e){ return; }
       if(data.internal)
         handleInternal(tokenSocket, data.command, data.data);
-      else  
+      else
         tokenSocket._monitor.handleResponse(data);
     });
     tokenSocket._socket.on("error", function(){
@@ -177,10 +176,8 @@ var TokenSocket = function(options, actions){
   var self = this;
   self._closed = true;
 
-  if(options.host.indexOf("http") < 0)
-    options.protocol = "https";
-  else
-    options.protocol = options.host.indexOf("https") < 0 ? "http" : "https";
+  var parsed = url.parse(options.host);
+  options.protocol = parsed.protocol || "http:";
 
   options = _.merge({
     tokenPath: "/socket/token",
@@ -193,7 +190,7 @@ var TokenSocket = function(options, actions){
     _actions: actions || {},
     _ready: options.ready || function(){},
     _onreconnect: options.onreconnect || function(){},
-    _rest: new RestJS({ protocol: options.protocol }),
+    _rest: new RestJS({ protocol: options.protocol.slice(0, options.protocol.length - 1) }),
     _reconnect: options.reconnect,
     _authentication: options.authentication,
     _apiRoute: options.host.indexOf("http") < 0 ? options.protocol + "//" + options.host : options.host,
@@ -290,7 +287,7 @@ TokenSocket.prototype.onmessage = function(callback){
 TokenSocket.prototype.end = function(callback){
   this._reconnect = false;
   this._closed = true;
-  this._socket.onclose = callback;
+  this._socket.on("close", callback);
   this._socket.close();
 };
 
