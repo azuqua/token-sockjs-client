@@ -7,6 +7,14 @@
 			out += chars.charAt(Math.random() * chars.length | 0);
 		return out;
 	};
+
+	Object.size = function(obj){
+	    var size = 0, key;
+	    for(key in obj){
+	        if(obj.hasOwnProperty(key)) size++;
+	    }
+	    return size;
+	};
  
 	var Monitor = function(socket, messageCallback){
 		this._socket = socket;
@@ -34,6 +42,8 @@
 			else
 				fn(null, data.resp);
 			delete this._inTransit[data.rpc][data.uuid];
+			if(Object.size(this._inTransit[data.rpc]) === 0)
+				delete this._inTransit[data.rpc];
 		}else if(this._messageCallback){
 			this._messageCallback(data.channel, data.message);
 		}
@@ -77,8 +87,8 @@
 			if(!obj.hasOwnProperty(prop))
 				continue;
 			var key = prefix ? prefix + "[" + prop + "]" : prop, 
-				val = object[prop];
-			str.push(typeof val == "object" ? formEncode(val, key) : encodeURIComponent(key) + "=" + encodeURIComponent(val));
+				val = obj[prop];
+			out.push(typeof val == "object" ? formEncode(val, key) : encodeURIComponent(key) + "=" + encodeURIComponent(val));
 		}
 		return out.join("&");
 	};
@@ -106,7 +116,7 @@
 			script.onload = function(e){
 				return false;
 			};
-			script.src = options.url + (options.url.indexOf("?") > 0 ? "&" : "?") + callback + "=" + callbackKey + "&" + formEncode(data || {});
+			script.src = options.url + (options.url.indexOf("?") > 0 ? "&" : "?") + "callback=" + callbackKey + "&" + formEncode(data || {});
 			global.document.body.appendChild(script);
 		}else{
 			var xhr = new global.XMLHttpRequest();
@@ -119,10 +129,10 @@
 						msg = JSON.parse(msg);
 					}catch(ev){}
 
-					if(xhr.status >= 200 && xhr.status < 300) 
+					if(xhr.status >= 200 && xhr.status < 300)
 						callback(null, msg);
-					else 
-						callback(msg ? msg : new Error("Error making HTTP request"));
+					else
+						callback(msg && msg.error ? new Error(msg.error) : msg instanceof Error ? msg : new Error(msg || "Error making HTTP request"));
 				}
 			};
 			xhr.setRequestHeader("Accept", "application/json");
@@ -173,9 +183,7 @@
 
 	var checkAndUseConnection = function(tokenSocket, callback){
 		if(tokenSocket._closed){
-			tokenSocket._queue.push({
-				fn: callback
-			});
+			tokenSocket._queue.push({ fn: callback });
 		}else{
 			callback();
 		}

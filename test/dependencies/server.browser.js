@@ -6140,6 +6140,10 @@ exports.install = function install(target, now, toFake) {
 	        };
 		},
 
+		clean: function(){
+			this._requests = [];
+		},
+
 		end: function(){
 			this.xhr.restore();
 		},
@@ -6151,41 +6155,36 @@ exports.install = function install(target, now, toFake) {
 				if(kv[0].indexOf("callback") > -1)
 					callback = kv[1];
 			});
-			if(callback && window[callback])
-				window[callback](resp);
+			if(callback && global[callback])
+				global[callback](resp);
 		},
 
 		respondWithJSON: function(req, code, data){
-			req.respond(200, { "Content-Type": "application/json" }, JSON.stringify(data));
+			req.respond(code, { "Content-Type": "application/json" }, JSON.stringify(data));
 		},
 
 		authenticateSocket: function(socket, callback){
-			socket.emit("open");
-			setTimeout(function(){
-				var req = socket._frames.shift();
-				if(typeof req === "string")
-					req = JSON.parse(req);
-				req.resp = "success";
-				socket.emit("message", { data: JSON.stringify(req) });
-				if(callback) callback();
-			}, 1);
+			var req = socket._frames.shift();
+			if(typeof req === "string")
+				req = JSON.parse(req);
+			req.resp = "success";
+			socket._emit("message", { data: JSON.stringify(req) });
+			if(callback) callback();
 		},
 
 		socketResponse: function(socket, callback){
-			setTimeout(function(){
-				var m, req = socket._frames.shift();
-				callback(req, function(error, resp, mixins){
-					if(error)
-						req.error = error;
-					else
-						req.resp = resp;
-					if(mixins){
-						for(m in mixins)
-							req[m] = mixins[m];
-					}
-					socket.emit("message", { data: JSON.stringify(req) });
-				});
-			}, 1);
+			var m, req = socket._frames.shift();
+			callback(req, function(error, resp, mixins){
+				if(error)
+					req.error = error;
+				else
+					req.resp = resp;
+				if(mixins){
+					for(m in mixins)
+						req[m] = mixins[m];
+				}
+				socket._emit("message", { data: JSON.stringify(req) });
+			});
 		}
 
 	};
@@ -6236,14 +6235,14 @@ exports.install = function install(target, now, toFake) {
 				this._frames.push(data);
 			},
 
-			emit: function(evt, data){
+			_emit: function(evt, data){
 				if(evt && typeof this["on" + evt] === "function")
 					this["on" + evt](data);
 			},
 
 			close: function(callback){
 				setTimeout(function(){
-					this.emit("close");
+					this._emit("close");
 				}.bind(this), 0);
 			}
 		};

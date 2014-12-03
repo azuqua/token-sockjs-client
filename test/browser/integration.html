@@ -7,12 +7,12 @@
     <div id="mocha"></div>
     <script src="../../node_modules/mocha/mocha.js"></script>
     <script src="../../node_modules/chai/chai.js"></script>
-    <script src="../dependencies/server.mock.browser.js"></script>
-    <script src="../../clients/client/tokensockjs.js"></script>
-    <script src="unit.js"></script>
+    <script src="../dependencies/server.browser.js"></script>
+    <script src="../../clients/browser/tokensockjs.js"></script>
+    <script src="integration.js"></script>
     <script>
       window.onload = function(){
-        window.unitTests();
+        window.integrationTests();
         if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
         else { mocha.run(); } 
       }

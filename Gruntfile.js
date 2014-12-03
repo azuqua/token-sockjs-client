@@ -3,7 +3,7 @@ module.exports = function(grunt){
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON("package.json"),
-		clean: ["clients/client/*.min.js"],
+		clean: ["clients/browser/*.min.js"],
 
 		jshint: {
 			options: {},
@@ -11,31 +11,32 @@ module.exports = function(grunt){
 				"Gruntfile.js",
 				"clients/**/*.js",
 				"test/server/**/*.js",
-				"test/client/**/*.js"
+				"test/browser/**/*.js",
+				"test/mocks/*.js"
 			]
 		},
 
 		uglify: {
             release: {
                 files: {
-                	"clients/client/tokensockjs.min.js": ["clients/client/tokensockjs.js"]
+                	"clients/browser/tokensockjs.min.js": ["clients/browser/tokensockjs.js"]
                 }
             }
         },
 
         browserify: {
-			"test/dependencies/server.mock.browser.js": ["test/dependencies/server.mock.js"]
+			"test/dependencies/server.browser.js": ["test/mocks/server.client.js"]
 		},
 
         mochaTest: {
         	options: { reporter: "spec", checkLeaks: true },
-	        src: ["test/server/**/*.js"]
+	        src: ["test/server/index.js"]
         },
 
         mocha_phantomjs: {
     		all: [
-    			"test/client/unit.html", 
-    			"test/client/integration.html"
+    			"test/browser/unit.html", 
+    			"test/browser/integration.html"
     		]
   		}
         

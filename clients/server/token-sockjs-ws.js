@@ -1,12 +1,14 @@
 
-var _    = require("lodash"),
-  async  = require("async"),
-  uuid   = require("node-uuid"),
-  WS     = require("sockjs-client-ws"),
-  RestJS = require("restjs");
+var _      = require("lodash"),
+    async  = require("async"),
+    uuid   = require("node-uuid"),
+    WS     = require("sockjs-client-ws"),
+    RestJS = require("restjs"); 
 
 if(RestJS.Rest)
   RestJS = RestJS.Rest;
+
+console.log("WS AND REST ", WS, RestJS);
 
 var Monitor = function(socket, messageCallback){
   this._socket = socket;
@@ -17,11 +19,10 @@ var Monitor = function(socket, messageCallback){
 Monitor.prototype.sendMessage = function(data, callback){
   if(typeof data === "string")
     data = JSON.parse(data);
-  var _uuid = uuid.v4();
-  data.uuid = _uuid;
+  data.uuid = uuid.v4();
   if(!this._inTransit[data.rpc])
     this._inTransit[data.rpc] = {};
-  this._inTransit[data.rpc][_uuid] = callback;
+  this._inTransit[data.rpc][data.uuid] = callback;
   this._socket.write(JSON.stringify(data));
 };
 
@@ -29,12 +30,14 @@ Monitor.prototype.handleResponse = function(data){
   var fn = null;
   if(data.rpc && data.uuid)
     fn = this._inTransit[data.rpc][data.uuid];
-  if(fn){
+  if(fn && typeof fn === "function"){
     if(data.error)
       fn(data.error);
     else
       fn(null, data.resp);
     delete this._inTransit[data.rpc][data.uuid];
+    if(Object.keys(this._inTransit[data.rpc]).length === 0)
+      delete this._inTransit[data.rpc];
   }else if(this._messageCallback){
     this._messageCallback(data.channel, data.message);
   }
@@ -60,7 +63,7 @@ var handleInternal = function(instance, command, data){
   }else if(command === "unsubscribe"){
     delete instance._channels[data.channel];
   }else if(command === "rpc"){
-    var fn = instance.actions;
+    var fn = instance._actions;
     data.command.split(".").forEach(function(s){
       fn = fn && fn[s] ? fn[s] : null;
     });
@@ -73,11 +76,14 @@ var handleInternal = function(instance, command, data){
 };
 
 var formEncode = function(obj, prefix) {
-  var out = [];
-  _.each(obj, function(val, key){
-    key = prefix ? prefix + "[" + key + "]" : key;
-    str.push(typeof val == "object" ? formEncode(val, key) : encodeURIComponent(key) + "=" + encodeURIComponent(val));
-  });
+  var prop, out = [];
+  for(prop in obj){
+    if(!obj.hasOwnProperty(prop))
+      continue;
+    var key = prefix ? prefix + "[" + prop + "]" : prop, 
+        val = obj[prop];
+    out.push(typeof val == "object" ? formEncode(val, key) : encodeURIComponent(key) + "=" + encodeURIComponent(val));
+  }
   return out.join("&");
 };
 
@@ -91,16 +97,16 @@ var request = function(client, options, data, callback){
     }catch(e){
       return callback(new Error(resp.body || "Invalid message"));
     }
-    callback(resp.error ? resp.error : null, resp);
+    callback(resp.error ? new Error(resp.error) : null, resp);
   });
 };
 
-var resetConnection = function(tokenSocket, callback){
+var resetConnection = function(tokenSocket, callbackName){
   request(tokenSocket._rest, tokenSocket._opts, tokenSocket._authentication, function(error, resp){
     if(error)
-      return callback(error);
+      return tokenSocket[callbackName](error);
     if(!resp.token)
-      return callback(new Error("No token found!"));
+      return tokenSocket[callbackName](new Error("No token found!"));
 
     tokenSocket._token = resp.token;
     tokenSocket._socket = new WS(tokenSocket._apiRoute + tokenSocket._socketPrefix);
@@ -110,10 +116,10 @@ var resetConnection = function(tokenSocket, callback){
         token: tokenSocket._token
       }, function(error, resp){
         if(error){
-          callback(error);
+          tokenSocket[callbackName](error);
         }else{
           delete tokenSocket._closed;
-          callback();
+          tokenSocket[callbackName]();
           replay(tokenSocket);
         }
       });
@@ -121,7 +127,8 @@ var resetConnection = function(tokenSocket, callback){
     tokenSocket._monitor = new Monitor(tokenSocket._socket);
     tokenSocket._socket.on("data", function(data){
       try{
-        data = JSON.parse(data);
+        if(typeof data === "string")
+          data = JSON.parse(data);
       }catch(e){ return; }
       if(data.internal)
         handleInternal(tokenSocket, data.command, data.data);
@@ -130,14 +137,14 @@ var resetConnection = function(tokenSocket, callback){
     });
     tokenSocket._socket.on("error", function(){
       tokenSocket._closed = true;
-      tokenSocket._socket.close(); // TODO test
+      tokenSocket._socket.close(); 
       if(tokenSocket._reconnect)
-        resetConnection(tokenSocket, tokenSocket._onreconnect);
+        resetConnection(tokenSocket, "_onreconnect");
     });
     tokenSocket._socket.on("close", function(){
       tokenSocket._closed = true;
       if(tokenSocket._reconnect)
-        resetConnection(tokenSocket, tokenSocket._onreconnect);
+        resetConnection(tokenSocket, "_onreconnect");
     });
   });
 };
@@ -153,7 +160,7 @@ var checkAndUseConnection = function(tokenSocket, callback){
 };
 
 var replay = function(tokenSocket){
-  _.each(TokenSocket._channels, function(bool, channel){
+  _.each(tokenSocket._channels, function(bool, channel){
     tokenSocket.subscribe(channel);
   });
   _.each(tokenSocket._queue, function(req){ 
@@ -183,9 +190,9 @@ var TokenSocket = function(options, actions){
   }, options);
 
   _.extend(self, {
-    actions: actions || {},
-    _ready: function(){},
-    _onreconnect: function(){},
+    _actions: actions || {},
+    _ready: options.ready || function(){},
+    _onreconnect: options.onreconnect || function(){},
     _rest: new RestJS({ protocol: options.protocol }),
     _reconnect: options.reconnect,
     _authentication: options.authentication,
@@ -201,7 +208,7 @@ var TokenSocket = function(options, actions){
     url: self._apiRoute + self._tokenPath
   };
 
-  resetConnection(self, self._ready);
+  resetConnection(self, "_ready");
 };
 
 TokenSocket.prototype.ready = function(callback){
@@ -228,7 +235,7 @@ TokenSocket.prototype.rpc = function(rpc, data, callback){
 };
 
 TokenSocket.prototype.register = function(actions){
-  this.actions = actions;
+  this._actions = actions;
 };
 
 TokenSocket.prototype.subscribe = function(channel){
