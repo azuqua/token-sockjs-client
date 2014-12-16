@@ -297,26 +297,65 @@ module.exports = function(TokenSocket, mocks){
 				assert.isFunction(socket._queue[1].fn, "Second socket queue request has fn property");
 			});
 
-			it("Should replay requests from the queue when the socket opens", function(){
+			it("Should replay requests from the queue when the socket opens", function(done){
 				assert.isTrue(socket._closed, "Socket is still closed");
 				assert.lengthOf(socket._queue, 2, "Socket queue still has two requests");
-				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
-				socket._socket._emit("connection");
-				mocks.server.authenticateSocket(socket._socket);
-				assert.notOk(socket._closed, "Socket is open again");
-				assert.lengthOf(socket._queue, 0, "Socket request queue is empty");
-				assert.lengthOf(socket._socket._frames, 2, "Socket made two requests");
-				var firstSocketReq = JSON.parse(socket._socket._frames[0]),
-					secondSocketReq = JSON.parse(socket._socket._frames[1]);
-				assert.equal(firstSocketReq.rpc, "ping", "Socket first made ping request");
-				assert.equal(secondSocketReq.rpc, "_subscribe", "Socket then made subscribe request");
-				assert.deepEqual(firstSocketReq.req, rpc, "Ping rpc request data is correct");
-				assert.equal(secondSocketReq.req.channel, channel, "Subscribe request has correct channel");
+				// the socket throttles reconnect attempts on an interval.
+				// after deferring a reconnect attempt it'll double the delay, 
+				// so below it'll get halved to avoid waiting twice as long as needed
+				setTimeout(function(){
+					mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
+					socket._socket._emit("connection");
+					mocks.server.authenticateSocket(socket._socket);
+					assert.notOk(socket._closed, "Socket is open again");
+					assert.lengthOf(socket._queue, 0, "Socket request queue is empty");
+					assert.lengthOf(socket._socket._frames, 2, "Socket made two requests");
+					var firstSocketReq = JSON.parse(socket._socket._frames.shift());
+					var secondSocketReq = JSON.parse(socket._socket._frames.shift());
+					assert.equal(firstSocketReq.rpc, "ping", "Socket first made ping request");
+					assert.equal(secondSocketReq.rpc, "_subscribe", "Socket then made subscribe request");
+					assert.deepEqual(firstSocketReq.req, rpc, "Ping rpc request data is correct");
+					assert.equal(secondSocketReq.req.channel, channel, "Subscribe request has correct channel");
+					
+					// cleanup queued leftover channel sync requests for other tests
+					socket.unsubscribe(channel);
+					socket._socket._frames.shift();
+					done();
+				}, (socket._connectDelay / 5) + 5);
 			});
 
-			it("Should implement exponential backoff on reconnection attempts", function(){
-				// TODO still need to do implement this
+			
+			it("Should attempt to authenticate and reconnect if the socket closes", function(done){
+				var lastDelay = socket._connectDelay;
+				assert.lengthOf(socket._rest._requests, 0, "Server has no outstanding requests");
+				assert.lengthOf(socket._socket._frames, 0, "Socket has no outstanding frames");
+				assert.notOk(socket._closed, "Socket knows that it's open");
+				assert.notOk(socket._connectTimer, "Connection timer does not exist");
+				socket._socket._emit("close");
+				assert.isTrue(socket._closed, "Socket knows that it's closed");
+				assert.ok(socket._connectTimer, "Connection timer exists");
+				assert.isTrue(socket._connectDelay > lastDelay, "Socket decreased reconnect frequency");
+				setTimeout(function(){
+					socket.onreconnect(sinon.spy(function(error){
+						assert.notOk(error, "Error is falsy");
+					}));
+					assert.lengthOf(socket._rest._requests, 1, "Server got one http request");
+					var httpReq = socket._rest._requests.shift();
+					assert.ok(httpReq, "HTTP request is ok");
+					assert.include(httpReq.options.url, socket._apiRoute + socket._tokenPath, "HTTP route contains socket token route");
+					mocks.server.respondWithJSON(httpReq, 200, { token: "foo" });
+					socket._socket._emit("connection");
+					mocks.server.authenticateSocket(socket._socket);
+					assert.isTrue(socket._onreconnect.called, "Socket onreconnect callback called");
+					assert.notOk(socket._closed, "Socket knows it's open again");
+					assert.notOk(socket._connectTimer, "Socket is not trying to reconnect again");
+					assert.lengthOf(socket._rest._requests, 0, "Socket did not make any more http requests");
+					assert.lengthOf(socket._socket._frames, 0, "Socket did not make any more ws requests");
+					done();
+				}, (socket._connectDelay / 5) + 5);
+				assert.lengthOf(socket._rest._requests, 0, "Socket will defer reconnect attempts");
 			});
+			
 
 		});
 

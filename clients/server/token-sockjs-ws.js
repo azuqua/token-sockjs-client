@@ -6,6 +6,14 @@ var _      = require("lodash"),
     WS     = require("sockjs-client-ws"),
     RestJS = require("restjs"); 
 
+var MAX_DELAY = 5 * 1000,
+    MIN_DELAY = 10,
+    dt = 5;
+
+var nextDelay = function(last){
+  return Math.min(last * dt, MAX_DELAY);
+};
+
 if(typeof RestJS === "object" && RestJS.Rest)
   RestJS = RestJS.Rest;
 
@@ -74,6 +82,20 @@ var handleInternal = function(instance, command, data){
   }
 };
 
+var attemptReconnect = function(tokenSocket){
+  tokenSocket._connectTimer = setTimeout(function(instance){
+    resetConnection(instance, function(error){
+      if(error){
+        instance._onreconnect(error);
+        attemptReconnect(instance);
+      }else{
+        instance._onreconnect();
+      }
+    });
+  }, tokenSocket._connectDelay, tokenSocket);
+  tokenSocket._connectDelay = nextDelay(tokenSocket._connectDelay);
+};
+
 var formEncode = function(obj, prefix) {
   var prop, out = [];
   for(prop in obj){
@@ -100,12 +122,12 @@ var request = function(client, options, data, callback){
   });
 };
 
-var resetConnection = function(tokenSocket, callbackName){
+var resetConnection = function(tokenSocket, callback){
   request(tokenSocket._rest, tokenSocket._opts, tokenSocket._authentication, function(error, resp){
-    if(error)
-      return tokenSocket[callbackName](error);
-    if(!resp.token)
-      return tokenSocket[callbackName](new Error("No token found!"));
+    if(error || !resp || !resp.token){
+      error = error || new Error("No token found!");
+      return typeof callback === "string" ? tokenSocket[callback](error) : callback(error);
+    }
 
     tokenSocket._token = resp.token;
     tokenSocket._socket = new WS(tokenSocket._apiRoute + tokenSocket._socketPrefix);
@@ -114,11 +136,15 @@ var resetConnection = function(tokenSocket, callbackName){
         rpc: "auth",
         token: tokenSocket._token
       }, function(error, resp){
+        callback = typeof callback === "string" ? tokenSocket[callback] : callback;
         if(error){
-          tokenSocket[callbackName](error);
+          callback(error);
         }else{
           delete tokenSocket._closed;
-          tokenSocket[callbackName]();
+          clearInterval(tokenSocket._connectTimer);
+          delete tokenSocket._connectTimer;
+          tokenSocket._connectDelay = MIN_DELAY;
+          callback();
           replay(tokenSocket);
         }
       });
@@ -136,14 +162,12 @@ var resetConnection = function(tokenSocket, callbackName){
     });
     tokenSocket._socket.on("error", function(){
       tokenSocket._closed = true;
-      tokenSocket._socket.close(); 
-      if(tokenSocket._reconnect)
-        resetConnection(tokenSocket, "_onreconnect");
+      tokenSocket._socket.close();
     });
     tokenSocket._socket.on("close", function(){
       tokenSocket._closed = true;
       if(tokenSocket._reconnect)
-        resetConnection(tokenSocket, "_onreconnect");
+        attemptReconnect(tokenSocket);
     });
   });
 };
@@ -187,6 +211,8 @@ var TokenSocket = function(options, actions){
   }, options);
 
   _.extend(self, {
+    _connectDelay: MIN_DELAY,
+    _connectTimer: null,
     _actions: actions || {},
     _ready: options.ready || function(){},
     _onreconnect: options.onreconnect || function(){},

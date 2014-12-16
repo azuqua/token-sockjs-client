@@ -1,4 +1,12 @@
 ;(function(global){
+
+	var MAX_DELAY = 5 * 1000,
+    	MIN_DELAY = 10,
+    	dt = 5;
+
+    var nextDelay = function(last){
+    	return Math.min(last * dt, MAX_DELAY);
+    };
  
 	var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	var uuid = function(){
@@ -81,10 +89,24 @@
 		}
 	};
 
+	var attemptReconnect = function(tokenSocket){
+		tokenSocket._connectTimer = setTimeout(function(instance){
+			resetConnection(instance, function(error){
+				if(error){
+					instance._onreconnect(error);
+					attemptReconnect(instance);
+				}else{
+					instance._onreconnect();
+				}
+			});
+		}, tokenSocket._connectDelay, tokenSocket);
+		tokenSocket._connectDelay = nextDelay(tokenSocket._connectDelay);
+	};
+
 	var formEncode = function(obj, prefix) {
 		var prop, out = [];
 		for(prop in obj){
-			if(!obj.hasOwnProperty(prop))
+			if(!obj.hasOwnProperty(prop) || (typeof obj[prop] === "string" && obj[prop].length < 1))
 				continue;
 			var key = prefix ? prefix + "[" + prop + "]" : prop, 
 				val = obj[prop];
@@ -120,7 +142,7 @@
 			global.document.body.appendChild(script);
 		}else{
 			var xhr = new global.XMLHttpRequest();
-			options.url += (options.url.indexOf("?") > 0 ? "&" : "?") + formEncode(data || {});
+			options.url += (data && options.url.indexOf("?") > 0 ? "&" : "?") + formEncode(data || {});
 			xhr.open(options.method, options.url, true);
 			xhr.onreadystatechange = function(){
 				if(xhr.readyState === 4){
@@ -140,12 +162,12 @@
 		}
 	};
 
-	var resetConnection = function(tokenSocket, callbackName){
+	var resetConnection = function(tokenSocket, callback){
 		request(tokenSocket._opts, tokenSocket._authentication, function(error, resp){
-			if(error)
-				return tokenSocket[callbackName](error);
-			if(!resp.token)
-				return tokenSocket[callbackName](new Error("No token found!"));
+			if(error || !resp || !resp.token){
+      			error = error || new Error("No token found!");
+    			return typeof callback === "string" ? tokenSocket[callback](error) : callback(error);
+    		}
 
 			tokenSocket._token = resp.token;
 			tokenSocket._socket = new global.SockJS(tokenSocket._apiRoute + tokenSocket._socketPrefix, null, tokenSocket._sockjs);
@@ -154,11 +176,15 @@
 					rpc: "auth",
 					token: tokenSocket._token
 				}, function(error, resp){
+					callback = typeof callback === "string" ? tokenSocket[callback] : callback;
 					if(error){
 						callback(error);
 					}else{
 						delete tokenSocket._closed;
-						tokenSocket[callbackName]();
+						clearInterval(tokenSocket._connectTimer);
+						delete tokenSocket._connectTimer;
+						tokenSocket._connectDelay = MIN_DELAY;
+				        callback();
 						replay(tokenSocket);
 					}
 				});
@@ -176,17 +202,16 @@
 			tokenSocket._socket.onclose = function(){
 				tokenSocket._closed = true;
 				if(tokenSocket._reconnect)
-					resetConnection(tokenSocket, "_onreconnect");
+					attemptReconnect(tokenSocket);
 			};
 		});
 	};
 
 	var checkAndUseConnection = function(tokenSocket, callback){
-		if(tokenSocket._closed){
+		if(tokenSocket._closed)
 			tokenSocket._queue.push({ fn: callback });
-		}else{
+		else
 			callback();
-		}
 	};
 
 	var replay = function(tokenSocket){
@@ -219,9 +244,11 @@
 		self._actions = typeof actions === "object" ? actions : {};
 		self._authentication = options.authentication || {};
 		self._queue = [];
+		self._connectDelay = MIN_DELAY;
+    	self._connectTimer = null;
 		self._opts = {
 			type: "GET",
-			url: self._apiRoute + self._tokenPath ,
+			url: self._apiRoute + self._tokenPath,
 			dataType: options.host !== global.location.host ? "jsonp" : "json"
 		};
 
