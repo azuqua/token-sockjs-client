@@ -7,10 +7,11 @@ var _      = require("lodash"),
     RestJS = require("restjs"); 
 
 var MAX_DELAY = 5 * 1000,
-    MIN_DELAY = 10;
+    MIN_DELAY = 10,
+    dt = 5;
 
 var nextDelay = function(last){
-  return Math.min(last * 2, MAX_DELAY);
+  return Math.min(last * dt, MAX_DELAY);
 };
 
 if(typeof RestJS === "object" && RestJS.Rest)
@@ -81,6 +82,20 @@ var handleInternal = function(instance, command, data){
   }
 };
 
+var attemptReconnect = function(tokenSocket){
+  tokenSocket._connectTimer = setTimeout(function(instance){
+    resetConnection(instance, function(error){
+      if(error){
+        instance._onreconnect(error);
+        attemptReconnect(instance);
+      }else{
+        instance._onreconnect();
+      }
+    });
+  }, tokenSocket._connectDelay, tokenSocket);
+  tokenSocket._connectDelay = nextDelay(tokenSocket._connectDelay);
+};
+
 var formEncode = function(obj, prefix) {
   var prop, out = [];
   for(prop in obj){
@@ -126,6 +141,7 @@ var resetConnection = function(tokenSocket, callback){
           callback(error);
         }else{
           delete tokenSocket._closed;
+          clearInterval(tokenSocket._connectTimer);
           delete tokenSocket._connectTimer;
           tokenSocket._connectDelay = MIN_DELAY;
           callback();
@@ -146,14 +162,12 @@ var resetConnection = function(tokenSocket, callback){
     });
     tokenSocket._socket.on("error", function(){
       tokenSocket._closed = true;
-      tokenSocket._socket.close(); 
-      if(tokenSocket._reconnect)
-        resetConnection(tokenSocket, "_onreconnect");
+      tokenSocket._socket.close();
     });
     tokenSocket._socket.on("close", function(){
       tokenSocket._closed = true;
       if(tokenSocket._reconnect)
-        resetConnection(tokenSocket, "_onreconnect");
+        attemptReconnect(tokenSocket);
     });
   });
 };

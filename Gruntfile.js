@@ -3,7 +3,7 @@ module.exports = function(grunt){
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON("package.json"),
-		clean: ["clients/browser/*.min.js"],
+		clean: ["clients/browser/*.min.js", "test/dependencies/*.browser.js"],
 
 		jshint: {
 			options: {},
@@ -52,7 +52,8 @@ module.exports = function(grunt){
 	grunt.registerTask("test", ["mochaTest", "mocha_phantomjs"]);
 	grunt.registerTask("lint", ["jshint"]);
 	grunt.registerTask("compress", ["uglify"]);
-	grunt.registerTask("release", ["clean", "lint", "browserify", "test", "compress"]);
+	grunt.registerTask("debug", ["clean", "lint", "browserify", "test"]);
+	grunt.registerTask("release", ["debug", "compress"]);
 	grunt.registerTask("default", ["release"]);
 
 };

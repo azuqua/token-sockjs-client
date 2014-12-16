@@ -21,6 +21,56 @@
 				ms.end();
 			});
 
+			describe("Exports unit tests", function(){
+
+				var socket;
+
+				before(function(){
+					socket = new TokenSocket();
+				});
+
+				after(function(){
+					ms._requests.shift();
+				});
+
+				it("Should expose a ready function", function(){
+					assert.isFunction(socket.ready, "Socket exposes ready function");
+				});
+
+				it("Should expose a onreconnect function", function(){
+					assert.isFunction(socket.onreconnect, "Socket exposes onreconnect");
+				});
+
+				it("Should allow users to list channels", function(){
+					assert.isFunction(socket.channels, "Socket exposes channels function");
+					assert.isArray(socket.channels(), "Socket channels returns an array");
+				});
+
+				it("Should expose an rpc function to make rpc calls", function(){
+					assert.isFunction(socket.rpc, "Socket exposes an rpc function");
+				});
+
+				it("Should allow users to register and overwrite rpc callbacks", function(){
+					assert.isFunction(socket.register, "Socket exposes an action registration function");
+				});
+
+				it("Should expose pubsub commands", function(){
+					assert.isFunction(socket.subscribe, "Socket exposes subscribe function");
+					assert.isFunction(socket.publish, "Socket exposes publish function");
+					assert.isFunction(socket.broadcast, "Socket exposes broadcast function");
+					assert.isFunction(socket.unsubscribe, "Socket exposes unbsubcribe function");
+				});
+
+				it("Should expose a callback for handling pubsub messages", function(){
+					assert.isFunction(socket.onmessage, "Socket exposes onmessage function");
+				});
+
+				it("Should expose a function to end the connection", function(){
+					assert.isFunction(socket.end, "Socket exposes end function");
+				});
+
+			});
+
 			describe("Initialization tests", function(){
 
 				it("Should not throw an error when created without options", function(){
@@ -122,67 +172,6 @@
 
 				*/
 
-			});
-
-		});
-
-		describe("Exports unit tests", function(){
-
-			var socket;
-
-			before(function(done){
-				var mock = global.mockWindow.create();
-				window.document = global.document = mock.document;
-				window.SockJS = global.SockJS = mock.SockJS;
-				ms.init();
-
-				socket = new TokenSocket();
-				socket.ready(done);
-				ms.respondWithJSON(ms._requests.shift(), 200, { token: "abc123" });
-				socket._socket._emit("open");
-				ms.authenticateSocket(socket._socket);
-			});
-
-			after(function(done){
-				window.document = _document;
-				ms.end();
-				socket.end(done);
-			});
-
-			it("Should expose a ready function", function(){
-				assert.isFunction(socket.ready, "Socket exposes ready function");
-			});
-
-			it("Should expose a onreconnect function", function(){
-				assert.isFunction(socket.onreconnect, "Socket exposes onreconnect");
-			});
-
-			it("Should allow users to list channels", function(){
-				assert.isFunction(socket.channels, "Socket exposes channels function");
-				assert.isArray(socket.channels(), "Socket channels returns an array");
-			});
-
-			it("Should expose an rpc function to make rpc calls", function(){
-				assert.isFunction(socket.rpc, "Socket exposes an rpc function");
-			});
-
-			it("Should allow users to register and overwrite rpc callbacks", function(){
-				assert.isFunction(socket.register, "Socket exposes an action registration function");
-			});
-
-			it("Should expose pubsub commands", function(){
-				assert.isFunction(socket.subscribe, "Socket exposes subscribe function");
-				assert.isFunction(socket.publish, "Socket exposes publish function");
-				assert.isFunction(socket.broadcast, "Socket exposes broadcast function");
-				assert.isFunction(socket.unsubscribe, "Socket exposes unbsubcribe function");
-			});
-
-			it("Should expose a callback for handling pubsub messages", function(){
-				assert.isFunction(socket.onmessage, "Socket exposes onmessage function");
-			});
-
-			it("Should expose a function to end the connection", function(){
-				assert.isFunction(socket.end, "Socket exposes end function");
 			});
 
 		});

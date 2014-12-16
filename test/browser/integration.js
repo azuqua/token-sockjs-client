@@ -348,7 +348,7 @@
 						socket.unsubscribe(channel);
 						socket._socket._frames.shift();
 						done();
-					}, (socket._connectDelay / 2) + 5);
+					}, (socket._connectDelay / 5) + 5);
 				});
 
 				it("Should attempt to authenticate and reconnect if the socket closes", function(done){
@@ -377,26 +377,8 @@
 						assert.lengthOf(ms._requests, 0, "Socket did not make any more http requests");
 						assert.lengthOf(socket._socket._frames, 0, "Socket did not make any more ws requests");
 						done();
-					}, (socket._connectDelay / 2) + 5);
+					}, (socket._connectDelay / 5) + 5);
 					assert.lengthOf(ms._requests, 0, "Socket will defer reconnect attempts");
-				});
-
-				it("Should continue to attempt to authenticate and reconnect if the socket closes", function(){
-					
-
-
-
-				});
-
-				it("Should decrease the frequency of connection attempts down to 5 seconds", function(){
-					
-
-
-
-				});
-
-				it("Should implement exponential backoff on reconnection attempts", function(){
-					// TODO still need to do implement this
 				});
 
 			});

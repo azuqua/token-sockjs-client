@@ -1,10 +1,11 @@
 ;(function(global){
 
 	var MAX_DELAY = 5 * 1000,
-    	MIN_DELAY = 10;
+    	MIN_DELAY = 10,
+    	dt = 5;
 
     var nextDelay = function(last){
-    	return Math.min(last * 2, MAX_DELAY);
+    	return Math.min(last * dt, MAX_DELAY);
     };
  
 	var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -180,6 +181,7 @@
 						callback(error);
 					}else{
 						delete tokenSocket._closed;
+						clearInterval(tokenSocket._connectTimer);
 						delete tokenSocket._connectTimer;
 						tokenSocket._connectDelay = MIN_DELAY;
 				        callback();
