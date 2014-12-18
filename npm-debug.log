@@ -6,7 +6,8 @@
 2 info using npm@1.4.28
 3 info using node@v0.10.33
 4 error Error: Git working directory not clean.
-4 error M README.md
+4 error M clients/browser/tokensockjs.min.js
+4 error M test/dependencies/server.browser.js
 4 error     at /usr/local/lib/node_modules/npm/lib/version.js:91:33
 4 error     at ChildProcess.exithandler (child_process.js:646:7)
 4 error     at ChildProcess.emit (events.js:98:17)
