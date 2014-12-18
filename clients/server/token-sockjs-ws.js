@@ -227,7 +227,7 @@ var TokenSocket = function(options, actions){
   });
 
   self._opts = {
-    type: "GET",
+    method: "GET",
     url: self._apiRoute + self._tokenPath
   };
 

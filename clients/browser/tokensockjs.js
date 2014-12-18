@@ -247,7 +247,7 @@
 		self._connectDelay = MIN_DELAY;
     	self._connectTimer = null;
 		self._opts = {
-			type: "GET",
+			method: "GET",
 			url: self._apiRoute + self._tokenPath,
 			dataType: options.host !== global.location.host ? "jsonp" : "json"
 		};
