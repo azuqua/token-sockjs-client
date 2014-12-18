@@ -96,7 +96,7 @@ var attemptReconnect = function(tokenSocket){
   tokenSocket._connectDelay = nextDelay(tokenSocket._connectDelay);
 };
 
-var formEncode = function(obj, prefix) {
+var formEncode = function(obj, prefix){
   var prop, out = [];
   for(prop in obj){
     if(!obj.hasOwnProperty(prop))
@@ -109,6 +109,7 @@ var formEncode = function(obj, prefix) {
 };
 
 var request = function(client, options, data, callback){
+  options = _.extend({}, options);
   options.url += (options.url.indexOf("?") < 0 ? "?" : "&") + formEncode(data);
   client.request(options, null, function(error, resp){
     if(error)

@@ -23,6 +23,15 @@
 	    }
 	    return size;
 	};
+
+	Object.shallowCopy = function(obj){
+		var key, copy = {};
+		for(key in obj){
+			if(obj.hasOwnProperty(key))
+				copy[key] = obj[key];
+		}
+		return copy;
+	};
  
 	var Monitor = function(socket, messageCallback){
 		this._socket = socket;
@@ -116,6 +125,7 @@
 	};
 
 	var request = function(options, data, callback){
+		options = Object.shallowCopy(options);
 		if(options.dataType && options.dataType.toLowerCase() === "jsonp"){
 			var callbackKey = "token_callback_" + new Date().getTime() + "_" + (Math.round(Math.random() * 1e16)).toString(36);
 			var script = global.document.createElement("script");
