@@ -11,7 +11,7 @@ A minified version can also be directly linked from the Azuqua CDN.
 
 ```
 <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
-<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.2.min.js"></script>
+<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.4.min.js"></script>
 ```
 
 ## API Overview
