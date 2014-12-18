@@ -4422,7 +4422,7 @@ if (typeof sinon == "undefined") {
 
 (function (global) {
     function makeApi(sinon, lol) {
-        var _lolex = typeof lolex !== "undefined" ? lolex : lol;
+        var llx = typeof lolex !== "undefined" ? lolex : lol;
 
         sinon.useFakeTimers = function () {
             var now, methods = Array.prototype.slice.call(arguments);
@@ -4433,14 +4433,14 @@ if (typeof sinon == "undefined") {
                 now = methods.shift();
             }
 
-            var clock = _lolex.install(now || 0, methods);
+            var clock = llx.install(now || 0, methods);
             clock.restore = clock.uninstall;
             return clock;
         };
 
         sinon.clock = {
             create: function (now) {
-                return _lolex.createClock(now);
+                return llx.createClock(now);
             }
         };
 
@@ -4767,6 +4767,7 @@ if (typeof sinon == "undefined") {
         204: "No Content",
         205: "Reset Content",
         206: "Partial Content",
+        207: "Multi-Status",
         300: "Multiple Choice",
         301: "Moved Permanently",
         302: "Found",
@@ -5654,11 +5655,22 @@ if (typeof sinon == "undefined") {
             return matcher === object;
         }
 
+        if (typeof(matcher) === "undefined") {
+            return typeof(object) === "undefined";
+        }
+
+        if (matcher === null) {
+            return object === null;
+        }
+
         if (getClass(object) === "Array" && getClass(matcher) === "Array") {
             return arrayContains(object, matcher);
         }
 
         if (matcher && typeof matcher === "object") {
+            if (matcher === object) {
+                return true;
+            }
             var prop;
             for (prop in matcher) {
                 var value = object[prop];
@@ -5666,7 +5678,11 @@ if (typeof sinon == "undefined") {
                         typeof object.getAttribute === "function") {
                     value = object.getAttribute(prop);
                 }
-                if (typeof value === "undefined" || !match(value, matcher[prop])) {
+                if (matcher[prop] === null || typeof matcher[prop] === 'undefined') {
+                    if (value !== matcher[prop]) {
+                        return false;
+                    }
+                } else if (typeof  value === "undefined" || !match(value, matcher[prop])) {
                     return false;
                 }
             }
