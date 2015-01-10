@@ -132,10 +132,12 @@
 			global[callbackKey] = function(resp) {
 				global.document.body.removeChild(script);
 				delete global[callbackKey];
-				try{
-					resp = JSON.parse(resp);
-				}catch(e){
-					return callback(new Error(resp || "Error making jsonp request!"));
+				if(typeof resp === "string"){
+					try{
+						resp = JSON.parse(resp);
+					}catch(e){
+						return callback(new Error(resp || "Error making jsonp request!"));
+					}
 				}
 				callback(resp && resp.error ? resp.error : null, resp);
 			};
