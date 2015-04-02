@@ -145,8 +145,8 @@ var resetConnection = function(tokenSocket, callback){
           clearInterval(tokenSocket._connectTimer);
           delete tokenSocket._connectTimer;
           tokenSocket._connectDelay = MIN_DELAY;
-          callback();
           replay(tokenSocket);
+          callback();
         }
       });
     });
