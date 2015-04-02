@@ -11,7 +11,7 @@ A minified version can also be directly linked from the Azuqua CDN.
 
 ```
 <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
-<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.8.min.js"></script>
+<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.9.min.js"></script>
 ```
 
 ## API Overview
@@ -154,7 +154,7 @@ The server client is backed by [sockjs-client-ws](https://github.com/steerapi/so
 
 ## API Overview
 
-The API surface to the Node.js version is identical to the browser version with a few minor changes. First, the constructor options argument now requires a "host" property set to the hostname of the TokenSocket server. Additionally, the constructor no longer accepts a sockjs configuration object on the options argument. Other than those two initialization changes the functionality is identical to the browser version.
+The API surface to the Node.js version is identical to the browser version with a few minor changes. First, the constructor options argument now requires a "host" property set to the hostname of the TokenSocket server and optionally accepts an associated "port" property. Additionally, the constructor no longer accepts a sockjs configuration object on the options argument. Other than those two initialization changes the functionality is identical to the browser version.
 
 # Build and Test
 
