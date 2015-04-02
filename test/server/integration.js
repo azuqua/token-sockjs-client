@@ -19,8 +19,9 @@ module.exports = function(TokenSocket, mocks){
 				});
 				var httpReq = socket._rest._requests.shift();
 				assert.ok(httpReq, "Socket made http token request");
-				assert.include(httpReq.options.url, socket._tokenPath, "HTTP token request goes to token path");
-				assert.include(httpReq.options.url, "foo=bar", "HTTP token request has authentication params");
+				assert.equal(httpReq.options.host, socket._host);
+				assert.include(httpReq.options.path, socket._tokenPath, "HTTP token request goes to token path");
+				assert.include(httpReq.options.path, "foo=bar", "HTTP token request has authentication params");
 				mocks.server.respondWithJSON(httpReq, 200, { token: token });
 				assert.ok(socket._socket, "Socket created sockjs websocket");
 				socket._socket._emit("connection");
@@ -41,8 +42,8 @@ module.exports = function(TokenSocket, mocks){
 				});
 				var httpReq = socket._rest._requests.shift();
 				assert.ok(httpReq, "Socket made http token request");
-				assert.include(httpReq.options.url, socket._tokenPath, "HTTP token request goes to token path");
-				assert.include(httpReq.options.url, "foo=bar", "HTTP token request has authentication params");
+				assert.include(httpReq.options.path, socket._tokenPath, "HTTP token request goes to token path");
+				assert.include(httpReq.options.path, "foo=bar", "HTTP token request has authentication params");
 				mocks.server.respondWithJSON(httpReq, 500, { error: error });
 				assert.isUndefined(socket._socket, "Socket did not create sockjs websocket");
 			});
@@ -342,7 +343,8 @@ module.exports = function(TokenSocket, mocks){
 					assert.lengthOf(socket._rest._requests, 1, "Server got one http request");
 					var httpReq = socket._rest._requests.shift();
 					assert.ok(httpReq, "HTTP request is ok");
-					assert.include(httpReq.options.url, socket._apiRoute + socket._tokenPath, "HTTP route contains socket token route");
+					assert.equal(httpReq.options.host, socket._host);
+					assert.include(httpReq.options.path, socket._tokenPath, "HTTP route contains socket token route");
 					mocks.server.respondWithJSON(httpReq, 200, { token: "foo" });
 					socket._socket._emit("connection");
 					mocks.server.authenticateSocket(socket._socket);

@@ -1,9 +1,16 @@
 
-var sinon = require("sinon");
+var sinon = require("sinon"),
+	_ = require("lodash");
 
 var MockSocketFactory = function(){
-	return {
-		_frames: [],
+
+	var _Socket = function(path){
+		this._path = path;
+		this._frames = [];
+		this._events = {};
+	};
+
+	_.extend(_Socket.prototype, {
 
 		write: function(data){
 			if(typeof data !== "string")
@@ -12,8 +19,8 @@ var MockSocketFactory = function(){
 		},
 
 		_emit: function(evt, data){
-			if(evt && typeof this[evt] === "function")
-				this[evt](data);
+			if(evt && typeof this._events[evt] === "function")
+				this._events[evt](data);
 		},
 
 		close: function(callback){
@@ -23,7 +30,14 @@ var MockSocketFactory = function(){
 		},
 
 		on: function(evt, callback){
-			this[evt] = callback;
+			this._events[evt] = callback;
+		}
+	});
+
+
+	return {
+		create: function(path){
+			return new _Socket(path);
 		}
 	};
 };
@@ -73,12 +87,7 @@ module.exports = {
 		};
 	},
 
-	WS: function(){
-		var key, out = new MockSocketFactory();
-		for(key in out)
-			if(typeof out[key] === "function") sinon.spy(out, key);
-		return out;
-	}
+	WS: new MockSocketFactory()
 
 };
 

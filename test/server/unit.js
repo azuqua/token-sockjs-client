@@ -21,7 +21,7 @@ module.exports = function(TokenSocket, mocks){
 				var socket = new TokenSocket({ host: "foo.com" });
 				var req = socket._rest._requests.shift();
 				assert.ok(req, "HTTP request exists");
-				assert.include(req.options.url, socket._tokenPath, "Request url contains token path");
+				assert.include(req.options.path, socket._tokenPath, "Request url contains token path");
 			});
 
 			it("Should correctly form encode JSON objects", function(){
@@ -30,7 +30,7 @@ module.exports = function(TokenSocket, mocks){
 				var socket = new TokenSocket({ host: "foo.com", authentication: input });
 				var req = socket._rest._requests.shift();
 				assert.ok(req, "HTTP request exists");
-				assert.include(req.options.url, out, "Request url contains properly form encoded input");
+				assert.include(req.options.path, out, "Request url contains properly form encoded input");
 			});
 
 			it("Should use the token in the socket request", function(){
