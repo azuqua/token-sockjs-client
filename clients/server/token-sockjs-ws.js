@@ -110,7 +110,7 @@ var formEncode = function(obj, prefix){
 
 var request = function(client, options, data, callback){
   options = _.extend({}, options);
-  options.url += (options.url.indexOf("?") < 0 ? "?" : "&") + formEncode(data);
+  options.path += (options.path.indexOf("?") < 0 ? "?" : "&") + formEncode(data);
   client.request(options, null, function(error, resp){
     if(error)
       return callback(error);
@@ -131,7 +131,7 @@ var resetConnection = function(tokenSocket, callback){
     }
 
     tokenSocket._token = resp.token;
-    tokenSocket._socket = new WS(tokenSocket._apiRoute + tokenSocket._socketPrefix);
+    tokenSocket._socket = WS.create(tokenSocket._protocol + "//" + tokenSocket._host + ":" + tokenSocket._port + tokenSocket._socketPrefix);
     tokenSocket._socket.on("connection", function(){
       tokenSocket._monitor.sendMessage({
         rpc: "auth",
@@ -202,13 +202,22 @@ var TokenSocket = function(options, actions){
   self._closed = true;
 
   var parsed = url.parse(options.host);
-  options.protocol = parsed.protocol || "http:";
+  options.protocol = parsed.protocol === "https:" ? "https:" : "http:";
+
+  if(!options.port){
+    var parts = options.host.split(":");
+    if(parts[1] && !isNaN(parseInt(parts[1]))){
+      options.port = parseInt(parts[1]);
+      options.host = parts[0];
+    }
+  }
 
   options = _.merge({
     tokenPath: "/socket/token",
     socketPrefix: "/sockets",
     authentication: {},
-    reconnect: true
+    reconnect: true,
+    port: options.port ? options.port : (options.protocol === "https:" ? 443 : 80)
   }, options);
 
   _.extend(self, {
@@ -220,16 +229,21 @@ var TokenSocket = function(options, actions){
     _rest: new RestJS({ protocol: options.protocol.slice(0, options.protocol.length - 1) }),
     _reconnect: options.reconnect,
     _authentication: options.authentication,
-    _apiRoute: options.host.indexOf("http") < 0 ? options.protocol + "//" + options.host : options.host,
     _socketPrefix: options.socketPrefix,
     _tokenPath: options.tokenPath,
     _channels: {},
-    _queue: []
+    _queue: [],
+    _host: options.host,
+    _protocol: options.protocol,
+    _port: options.port
   });
 
   self._opts = {
     method: "GET",
-    url: self._apiRoute + self._tokenPath
+    protocol: options.protocol,
+    host: options.host,
+    path: self._tokenPath,
+    port: options.port
   };
 
   resetConnection(self, "_ready");

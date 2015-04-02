@@ -1,5 +1,5 @@
 
-var proxyquire = require("proxyquire").noPreserveCache(),
+var proxyquire = require("proxyquire"),
 	mocks = require("../mocks/server");
 
 var	TokenSocket = proxyquire("../../index", { 
