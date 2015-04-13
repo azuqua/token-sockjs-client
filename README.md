@@ -7,11 +7,11 @@ The client libraries for [node-token-sockjs](https://github.com/azuqua/node-toke
 
 The browser client does not require any external dependencies other than [sockjs](https://github.com/sockjs/sockjs-client). 
 
-A minified version can also be directly linked from the Azuqua CDN.
+The Azuqua CDN also hosts a minified copy of each version.
 
 ```
 <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
-<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.9.min.js"></script>
+<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.10.min.js"></script>
 ```
 
 ## API Overview
@@ -28,6 +28,7 @@ The TokenSocket constructor accepts two objects as arguments, options and action
 * **reconnect** - Whether or not this module should automatically reconnect if the websocket connection closes. **Default value is true.**
 * **authentication** - Any extra authentication data to be sent to the server upon a token request. This object will be form encoded and sent as URL parameters. The browser will automatically send your cookies.
 * **sockjs** - [An object containing any valid sockjs configuration changes.](https://github.com/sockjs/sockjs-client#sockjs-class)
+* **ping** - An integer indicating the frequency in milliseconds that the client should wait between ping requests. If this property is undefined the client will not make automatic ping requests. This can be useful for maintaining open connections across load balancers or proxies that close unused connections.
 
 #### Actions
 

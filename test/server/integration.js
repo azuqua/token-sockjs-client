@@ -153,6 +153,32 @@ module.exports = function(TokenSocket, mocks){
 				assert.isObject(socketResp.resp.data, "Socket response has ping response data");
 			});
 
+			it("Should automatically make ping requests if specified", function(done){
+				var data = {},
+					freq = 50;
+
+				socket.end(function(){
+					socket = new TokenSocket({ host: "foo.com", ping: freq });
+					assert.ok(socket._pingTimer, "Socket set pingTimer");
+					socket.ready(function(error){
+						assert.notOk(error, "Socket ready w/o error");
+						assert.lengthOf(socket._socket._frames, 0, "Socket has no frames");
+						setTimeout(function(){
+							assert.lengthOf(socket._socket._frames, 1, "Socket has one frames");
+							var socketResp = socket._socket._frames.shift();
+							assert.ok(socketResp, "Socket response is there");
+							socketResp = JSON.parse(socketResp);
+							assert.equal(socketResp.rpc, "_ping");
+							assert.deepEqual(socketResp.req, data);
+							done();
+						}, freq + 10);
+					});
+					mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
+					socket._socket._emit("connection");
+					mocks.server.authenticateSocket(socket._socket);
+				});
+			});
+
 		});
 
 		describe("Publish subscribe tests", function(){
