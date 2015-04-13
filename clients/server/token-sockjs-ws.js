@@ -45,7 +45,7 @@ Monitor.prototype.handleResponse = function(data){
     delete this._inTransit[data.rpc][data.uuid];
     if(Object.keys(this._inTransit[data.rpc]).length === 0)
       delete this._inTransit[data.rpc];
-  }else if(this._messageCallback){
+  }else if(this._messageCallback && data.channel){
     this._messageCallback(data.channel, data.message);
   }
 };
@@ -224,6 +224,7 @@ var TokenSocket = function(options, actions){
     _connectDelay: MIN_DELAY,
     _connectTimer: null,
     _actions: actions || {},
+    _ping: options.ping || false,
     _ready: options.ready || function(){},
     _onreconnect: options.onreconnect || function(){},
     _rest: new RestJS({ protocol: options.protocol.slice(0, options.protocol.length - 1) }),
@@ -245,6 +246,13 @@ var TokenSocket = function(options, actions){
     path: self._tokenPath,
     port: options.port
   };
+
+  if(self._ping && self._ping > 0){
+    self._pingTimer = setInterval(function(){
+      if(!self._closed)
+        self.rpc("_ping", {});
+    }, self._ping);
+  }
 
   resetConnection(self, "_ready");
 };

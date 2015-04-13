@@ -61,7 +61,7 @@
 			delete this._inTransit[data.rpc][data.uuid];
 			if(Object.size(this._inTransit[data.rpc]) === 0)
 				delete this._inTransit[data.rpc];
-		}else if(this._messageCallback){
+		}else if(this._messageCallback && data.channel){
 			this._messageCallback(data.channel, data.message);
 		}
 	};
@@ -249,6 +249,7 @@
 			options.host = global.location.host;
 		self._reconnect = typeof options.reconnect === "undefined" ? true : options.reconnect;
 		self._channels = {};
+		self._ping = options.ping || false;
 		self._sockjs = options.sockjs || {};
 		self._apiRoute = options.host.indexOf("http") < 0 ? global.location.protocol + "//" + options.host : options.host;
 		self._socketPrefix = options.socketPrefix || "/sockets";
@@ -263,6 +264,13 @@
 			url: self._apiRoute + self._tokenPath,
 			dataType: options.host !== global.location.host ? "jsonp" : "json"
 		};
+
+		if(self._ping && self._ping > 0){
+			self._pingTimer = setInterval(function(){
+				if(!self._closed)
+					self.rpc("_ping", {});
+			}, self._ping);
+		}
 
 		resetConnection(self, "_ready");
 	};
