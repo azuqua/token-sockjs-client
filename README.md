@@ -149,7 +149,7 @@ socket.end(function(){
 });
 ```
 
-# Event Emitter Interface
+## Event Emitter Interface
 
 The socket is now extended by an [EventEmitter](https://github.com/Wolfy87/EventEmitter/blob/master/docs/api.md) and currently emits three events. This interface can replace the earlier `ready`, `onreconnect`, and `onmessage` functions or can be used alongside them. In fact, those functions are now proxies for the event emitter. In order to make cleaning up registered listeners as easy as possible it would be ideal to switch entirely to this interface, however the old interface will remain in place until the next major release.
 
