@@ -41,7 +41,8 @@
     "mocha-phantomjs": "^3.5.1",
     "phantomjs": "^1.9.12",
     "sinon": "^1.12.1",
-    "proxyquire": "^1.1.0"
+    "proxyquire": "^1.1.0",
+    "wolfy87-eventemitter": "^4.2.11"
   },
   "dependencies": {
     "async": "^0.9.0",

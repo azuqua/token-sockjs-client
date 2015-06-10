@@ -58,6 +58,7 @@ module.exports = function(TokenSocket, mocks){
 
 			before(function(done){
 				socket = new TokenSocket({ host: "foo.com" });
+				socket._emitter.emit = sinon.spy(socket._emitter.emit);
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
 				socket._socket._emit("connection");
@@ -189,6 +190,7 @@ module.exports = function(TokenSocket, mocks){
 
 			before(function(done){
 				socket = new TokenSocket({ host: "foo.com" });
+				socket._emitter.emit = sinon.spy(socket._emitter.emit);
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
 				socket._socket._emit("connection");
@@ -216,9 +218,9 @@ module.exports = function(TokenSocket, mocks){
 					assert.equal(_channel, channel, "OnMessage fn has correct channel");
 					assert.deepEqual(_message, message, "OnMessage fn has correct message");
 				});
-				socket._monitor._messageCallback = sinon.spy(socket._monitor._messageCallback);
+				socket._emitter.emit.reset();
 				socket._socket._emit("data", JSON.stringify(data));
-				assert.isTrue(socket._monitor._messageCallback.called, "Message callback was called");
+				assert.isTrue(socket._emitter.emit.called, "Message callback was called");
 				assert.lengthOf(socket._socket._frames, startingFrames, "Socket did not make any requests");
 			});
 
@@ -294,6 +296,7 @@ module.exports = function(TokenSocket, mocks){
 
 			before(function(done){
 				socket = new TokenSocket({ host: "foo.com" });
+				socket._emitter.emit = sinon.spy(socket._emitter.emit);
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
 				socket._socket._emit("connection");
@@ -306,7 +309,7 @@ module.exports = function(TokenSocket, mocks){
 
 			it("Should automatically reconnect if not specified in config", function(){
 				assert.isTrue(socket._reconnect, "Socket reconnect flag is true");
-				assert.isFunction(socket._onreconnect, "Socket onreconnect is a function");
+				assert.isFunction(socket.onreconnect, "Socket onreconnect is a function");
 			});
 
 			it("Should queue requests up when the socket is closed", function(){
@@ -374,7 +377,7 @@ module.exports = function(TokenSocket, mocks){
 					mocks.server.respondWithJSON(httpReq, 200, { token: "foo" });
 					socket._socket._emit("connection");
 					mocks.server.authenticateSocket(socket._socket);
-					assert.isTrue(socket._onreconnect.called, "Socket onreconnect callback called");
+					assert.isTrue(socket._emitter.emit.called, "Socket onreconnect callback called");
 					assert.notOk(socket._closed, "Socket knows it's open again");
 					assert.notOk(socket._connectTimer, "Socket is not trying to reconnect again");
 					assert.lengthOf(socket._rest._requests, 0, "Socket did not make any more http requests");
