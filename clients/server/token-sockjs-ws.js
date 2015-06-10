@@ -203,6 +203,11 @@ var TokenSocket = function(options, actions){
 
   var self = this;
   self._emitter = new EventEmitter();
+
+  _.each(EventEmitter.prototype, function(fn){
+    self[fn] = self._emitter[fn];
+  });
+
   self._closed = true;
 
   var parsed = url.parse(options.host);
