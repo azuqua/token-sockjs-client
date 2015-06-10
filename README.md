@@ -11,7 +11,7 @@ The Azuqua CDN also hosts a minified copy of each version.
 
 ```
 <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
-<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.0.10.min.js"></script>
+<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.1.0.min.js"></script>
 ```
 
 ## API Overview
@@ -148,6 +148,30 @@ socket.end(function(){
 	console.log("Socket closed");
 });
 ```
+
+## Event Emitter Interface
+
+The socket is now extended by an [EventEmitter](https://github.com/Wolfy87/EventEmitter/blob/master/docs/api.md) and currently emits three events. This interface can replace the earlier `ready`, `onreconnect`, and `onmessage` functions or can be used alongside them. In fact, those functions are now proxies for the event emitter. In order to make cleaning up registered listeners as easy as possible it would be ideal to switch entirely to this interface, however the old interface will remain in place until the next major release.
+
+* **ready** - Emitted when the socket is first initialized and authenticated. This will be called with an optional error object.
+* **reconnect** - Emitted when the socket reconnects after being disconnected. This will be called with an optional error object. If an error is provided the socket will automatically attempt to reconnect again after a few seconds.
+* **message** - Emitted when a message arrives on the publish-subscribe network. This will be called with the channel and message as arguments.
+
+```
+socket.on("ready", function(error){
+	// ...
+});
+
+socket.on("reconnect", function(error){
+	// ...
+});
+
+socket.on("message", function(channel, message){
+	// ...
+});
+```
+
+**The uncompressed development version of the browser client does not ship with the EventEmitter dependency. Please use the minified version from the CDN or this repository for a full build with all dependencies.**
 
 # Server Client
 

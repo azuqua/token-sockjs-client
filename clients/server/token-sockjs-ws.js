@@ -1,10 +1,11 @@
 
-var _      = require("lodash"),
-    async  = require("async"),
-    url    = require("url"),
-    uuid   = require("node-uuid"),
-    WS     = require("sockjs-client-ws"),
-    RestJS = require("restjs"); 
+var _            = require("lodash"),
+    async        = require("async"),
+    url          = require("url"),
+    uuid         = require("node-uuid"),
+    WS           = require("sockjs-client-ws"),
+    RestJS       = require("restjs"),
+    EventEmitter = require("events").EventEmitter;
 
 var MAX_DELAY = 5 * 1000,
     MIN_DELAY = 10,
@@ -17,10 +18,10 @@ var nextDelay = function(last){
 if(typeof RestJS === "object" && RestJS.Rest)
   RestJS = RestJS.Rest;
 
-var Monitor = function(socket, messageCallback){
+var Monitor = function(socket, emitter){
   this._socket = socket;
   this._inTransit = {};
-  this._messageCallback = messageCallback || function(){};
+  this._emitter = emitter;
 };
 
 Monitor.prototype.sendMessage = function(data, callback){
@@ -45,8 +46,8 @@ Monitor.prototype.handleResponse = function(data){
     delete this._inTransit[data.rpc][data.uuid];
     if(Object.keys(this._inTransit[data.rpc]).length === 0)
       delete this._inTransit[data.rpc];
-  }else if(this._messageCallback && data.channel){
-    this._messageCallback(data.channel, data.message);
+  }else if(data.channel){
+    this._emitter.emit("message", data.channel, data.message);
   }
 };
 
@@ -86,11 +87,11 @@ var attemptReconnect = function(tokenSocket){
   tokenSocket._connectTimer = setTimeout(function(instance){
     resetConnection(instance, function(error){
       if(error){
-        instance._onreconnect(error);
-        attemptReconnect(instance);
-      }else{
-        instance._onreconnect();
-      }
+          instance._emitter.emit("reconnect", error);
+          attemptReconnect(instance);
+        }else{
+          instance._emitter.emit("reconnect");
+        }
     });
   }, tokenSocket._connectDelay, tokenSocket);
   tokenSocket._connectDelay = nextDelay(tokenSocket._connectDelay);
@@ -127,7 +128,9 @@ var resetConnection = function(tokenSocket, callback){
   request(tokenSocket._rest, tokenSocket._opts, tokenSocket._authentication, function(error, resp){
     if(error || !resp || !resp.token){
       error = error || new Error("No token found!");
-      return typeof callback === "string" ? tokenSocket[callback](error) : callback(error);
+      return typeof callback === "string" 
+          ? tokenSocket._emitter.emit(callback, error) 
+          : callback(error);
     }
 
     tokenSocket._token = resp.token;
@@ -137,7 +140,7 @@ var resetConnection = function(tokenSocket, callback){
         rpc: "auth",
         token: tokenSocket._token
       }, function(error, resp){
-        callback = typeof callback === "string" ? tokenSocket[callback] : callback;
+          callback = typeof callback === "string" ? tokenSocket._emitter.emit.bind(tokenSocket._emitter, callback) : callback;
         if(error){
           callback(error);
         }else{
@@ -150,7 +153,7 @@ var resetConnection = function(tokenSocket, callback){
         }
       });
     });
-    tokenSocket._monitor = new Monitor(tokenSocket._socket);
+    tokenSocket._monitor = new Monitor(tokenSocket._socket, tokenSocket._emitter);
     tokenSocket._socket.on("data", function(data){
       try{
         if(typeof data === "string")
@@ -199,6 +202,12 @@ var TokenSocket = function(options, actions){
     throw new Error("TokenSocket requires host option!");
 
   var self = this;
+  self._emitter = new EventEmitter();
+
+  _.each(EventEmitter.prototype, function(fn){
+    self[fn] = self._emitter[fn];
+  });
+
   self._closed = true;
 
   var parsed = url.parse(options.host);
@@ -225,8 +234,6 @@ var TokenSocket = function(options, actions){
     _connectTimer: null,
     _actions: actions || {},
     _ping: options.ping || false,
-    _ready: options.ready || function(){},
-    _onreconnect: options.onreconnect || function(){},
     _rest: new RestJS({ protocol: options.protocol.slice(0, options.protocol.length - 1) }),
     _reconnect: options.reconnect,
     _authentication: options.authentication,
@@ -238,6 +245,11 @@ var TokenSocket = function(options, actions){
     _protocol: options.protocol,
     _port: options.port
   });
+
+  if(typeof options.ready === "function")
+    self.ready(options.ready);
+  if(typeof options.onreconnect === "function")
+    self.onreconnect(options.onreconnect);
 
   self._opts = {
     method: "GET",
@@ -254,15 +266,15 @@ var TokenSocket = function(options, actions){
     }, self._ping);
   }
 
-  resetConnection(self, "_ready");
+  resetConnection(self, "ready");
 };
 
 TokenSocket.prototype.ready = function(callback){
-  this._ready = callback;
+  this._emitter.on("ready", callback);
 };
 
 TokenSocket.prototype.onreconnect = function(callback){
-  this._onreconnect = callback;
+  this._emitter.on("reconnect", callback);
 };
 
 TokenSocket.prototype.channels = function(){
@@ -330,11 +342,13 @@ TokenSocket.prototype.broadcast = function(data){
 };
 
 TokenSocket.prototype.onmessage = function(callback){
-  this._monitor._messageCallback = callback;
+  this._emitter.on("message", callback);
 };
 
 TokenSocket.prototype.end = function(callback){
-  this._reconnect = false;
+  this._emitter.removeAllListeners("ready");
+  this._emitter.removeAllListeners("reconnect");
+  this._emitter.removeAllListeners("message");
   this._closed = true;
   this._socket.on("close", callback);
   this._socket.close();

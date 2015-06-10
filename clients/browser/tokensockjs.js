@@ -1,12 +1,12 @@
 ;(function(global){
 
 	var MAX_DELAY = 5 * 1000,
-    	MIN_DELAY = 10,
-    	dt = 5;
+		MIN_DELAY = 10,
+		dt = 5;
 
-    var nextDelay = function(last){
-    	return Math.min(last * dt, MAX_DELAY);
-    };
+	var nextDelay = function(last){
+		return Math.min(last * dt, MAX_DELAY);
+	};
  
 	var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	var uuid = function(){
@@ -17,11 +17,11 @@
 	};
 
 	Object.size = function(obj){
-	    var size = 0, key;
-	    for(key in obj){
-	        if(obj.hasOwnProperty(key)) size++;
-	    }
-	    return size;
+		var size = 0, key;
+		for(key in obj){
+			if(obj.hasOwnProperty(key)) size++;
+		}
+		return size;
 	};
 
 	Object.shallowCopy = function(obj){
@@ -32,11 +32,53 @@
 		}
 		return copy;
 	};
+
+	// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+	if (!Object.keys) {
+		Object.keys = (function() {
+			'use strict';
+			var hasOwnProperty = Object.prototype.hasOwnProperty,
+			hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+			dontEnums = [
+				'toString',
+				'toLocaleString',
+				'valueOf',
+				'hasOwnProperty',
+				'isPrototypeOf',
+				'propertyIsEnumerable',
+				'constructor'
+			],
+			dontEnumsLength = dontEnums.length;
+
+			return function(obj) {
+				if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
+					throw new TypeError('Object.keys called on non-object');
+				}
+
+				var result = [], prop, i;
+
+				for (prop in obj) {
+					if (hasOwnProperty.call(obj, prop)) {
+						result.push(prop);
+					}
+				}
+
+				if (hasDontEnumBug) {
+					for (i = 0; i < dontEnumsLength; i++) {
+						if (hasOwnProperty.call(obj, dontEnums[i])) {
+							result.push(dontEnums[i]);
+						}
+					}
+				}
+				return result;
+			};
+		}());
+	}
  
-	var Monitor = function(socket, messageCallback){
+	var Monitor = function(socket, emitter){
 		this._socket = socket;
 		this._inTransit = {};
-		this._messageCallback = messageCallback || function(){};
+		this._emitter = emitter;
 	};
  
 	Monitor.prototype.sendMessage = function(data, callback){
@@ -61,8 +103,8 @@
 			delete this._inTransit[data.rpc][data.uuid];
 			if(Object.size(this._inTransit[data.rpc]) === 0)
 				delete this._inTransit[data.rpc];
-		}else if(this._messageCallback && data.channel){
-			this._messageCallback(data.channel, data.message);
+		}else if(data.channel){
+			this._emitter.emit("message", data.channel, data.message);
 		}
 	};
 
@@ -102,10 +144,10 @@
 		tokenSocket._connectTimer = setTimeout(function(instance){
 			resetConnection(instance, function(error){
 				if(error){
-					instance._onreconnect(error);
+					instance._emitter.emit("reconnect", error);
 					attemptReconnect(instance);
 				}else{
-					instance._onreconnect();
+					instance._emitter.emit("reconnect");
 				}
 			});
 		}, tokenSocket._connectDelay, tokenSocket);
@@ -177,9 +219,11 @@
 	var resetConnection = function(tokenSocket, callback){
 		request(tokenSocket._opts, tokenSocket._authentication, function(error, resp){
 			if(error || !resp || !resp.token){
-      			error = error || new Error("No token found!");
-    			return typeof callback === "string" ? tokenSocket[callback](error) : callback(error);
-    		}
+				error = error || new Error("No token found!");
+				return typeof callback === "string" 
+					? tokenSocket._emitter.emit(callback, error) 
+					: callback(error);
+			}
 
 			tokenSocket._token = resp.token;
 			tokenSocket._socket = new global.SockJS(tokenSocket._apiRoute + tokenSocket._socketPrefix, null, tokenSocket._sockjs);
@@ -188,7 +232,7 @@
 					rpc: "auth",
 					token: tokenSocket._token
 				}, function(error, resp){
-					callback = typeof callback === "string" ? tokenSocket[callback] : callback;
+					callback = typeof callback === "string" ? tokenSocket._emitter.emit.bind(tokenSocket._emitter, callback) : callback;
 					if(error){
 						callback(error);
 					}else{
@@ -201,7 +245,7 @@
 					}
 				});
 			};
-			tokenSocket._monitor = new Monitor(tokenSocket._socket);
+			tokenSocket._monitor = new Monitor(tokenSocket._socket, tokenSocket._emitter);
 			tokenSocket._socket.onmessage = function(e){
 				try{
 					e.data = JSON.parse(e.data);
@@ -238,13 +282,19 @@
 
 	var TokenSocket = function(options, actions){
 		var self = this;
+		self._emitter = new EventEmitter();
+
+		Object.keys(EventEmitter.prototype).forEach(function(k){
+			self[k] = self._emitter[k];
+		});
+
 		self._closed = true;
 		if(!options)
 			options = {};
-		if(!self._ready || options.ready)
-			self._ready = options.ready || function(){};
-		if(!self._onreconnect || options.onreconnect)
-			self._onreconnect = options.onreconnect || function(){};
+		if(!self._ready && typeof options.ready === "function")
+			self.ready(options.ready);
+		if(!self._onreconnect && typeof options.onreconnect === "function")
+			self.onreconnect(options.onreconnect);
 		if(!options.host)
 			options.host = global.location.host;
 		self._reconnect = typeof options.reconnect === "undefined" ? true : options.reconnect;
@@ -258,7 +308,7 @@
 		self._authentication = options.authentication || {};
 		self._queue = [];
 		self._connectDelay = MIN_DELAY;
-    	self._connectTimer = null;
+		self._connectTimer = null;
 		self._opts = {
 			method: "GET",
 			url: self._apiRoute + self._tokenPath,
@@ -272,15 +322,15 @@
 			}, self._ping);
 		}
 
-		resetConnection(self, "_ready");
+		resetConnection(self, "ready");
 	};
 
 	TokenSocket.prototype.ready = function(callback){
-		this._ready = callback;
+		this._emitter.on("ready", callback);
 	};
 
 	TokenSocket.prototype.onreconnect = function(callback){
-		this._onreconnect = callback;
+		this._emitter.on("reconnect", callback);
 	};
 
 	TokenSocket.prototype.channels = function(){
@@ -348,11 +398,13 @@
 	};
 
 	TokenSocket.prototype.onmessage = function(callback){
-		this._monitor._messageCallback = callback;
+		this._emitter.on("message", callback);
 	};
 
 	TokenSocket.prototype.end = function(callback){
-		this._reconnect = false;
+		this._emitter.removeAllListeners("ready");
+		this._emitter.removeAllListeners("reconnect");
+		this._emitter.removeAllListeners("message");
 		this._closed = true;
 		this._socket.onclose = callback;
 		this._socket.close();

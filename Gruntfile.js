@@ -6,7 +6,9 @@ module.exports = function(grunt){
 		clean: ["clients/browser/*.min.js", "test/dependencies/*.browser.js"],
 
 		jshint: {
-			options: {},
+			options: {
+				laxbreak: true
+			},
 			files: [
 				"Gruntfile.js",
 				"clients/**/*.js",
@@ -19,13 +21,18 @@ module.exports = function(grunt){
 		uglify: {
             release: {
                 files: {
-                	"clients/browser/tokensockjs.min.js": ["clients/browser/tokensockjs.js"]
+                	"clients/browser/tokensockjs.min.js": [
+                		"clients/browser/tokensockjs.js", 
+                		"node_modules/wolfy87-eventemitter/EventEmitter.js"
+                	]
                 }
             }
         },
 
         browserify: {
-			"test/dependencies/server.browser.js": ["test/mocks/server.client.js"]
+			"test/dependencies/server.browser.js": [
+				"test/mocks/server.client.js"
+			]
 		},
 
         mochaTest: {

@@ -215,6 +215,7 @@
 
 				before(function(done){
 					socket = new TokenSocket();
+					socket._emitter.emit = sinon.spy(socket._emitter.emit);
 					socket.ready(done);
 					ms.respondWithJSON(ms._requests.shift(), 200, { token: "foo" });
 					socket._socket._emit("open");
@@ -242,9 +243,9 @@
 						assert.equal(_channel, channel, "OnMessage fn has correct channel");
 						assert.deepEqual(_message, message, "OnMessage fn has correct message");
 					});
-					socket._monitor._messageCallback = sinon.spy(socket._monitor._messageCallback);
+					socket._emitter.emit.reset();
 					socket._socket._emit("message", { data: JSON.stringify(data) });
-					assert.isTrue(socket._monitor._messageCallback.called, "Message callback was called");
+					assert.isTrue(socket._emitter.emit.called, "Message callback was called");
 					assert.lengthOf(socket._socket._frames, startingFrames, "Socket did not make any requests");
 				});
 
@@ -332,7 +333,7 @@
 
 				it("Should automatically reconnect if not specified in config", function(){
 					assert.isTrue(socket._reconnect, "Socket reconnect flag is true");
-					assert.isFunction(socket._onreconnect, "Socket onreconnect is a function");
+					assert.isFunction(socket.onreconnect, "Socket onreconnect is a function");
 				});
 
 				it("Should queue requests up when the socket is closed", function(){
@@ -386,6 +387,8 @@
 					assert.isTrue(socket._closed, "Socket knows that it's closed");
 					assert.ok(socket._connectTimer, "Connection timer exists");
 					assert.isTrue(socket._connectDelay > lastDelay, "Socket decreased reconnect frequency");
+					socket._emitter.emit = sinon.spy(socket._emitter.emit);
+					socket._emitter.emit.reset();
 					setTimeout(function(){
 						socket.onreconnect(sinon.spy(function(error){
 							assert.notOk(error, "Error is falsy");
@@ -397,12 +400,12 @@
 						ms.respondWithJSON(httpReq, 200, { token: "foo" });
 						socket._socket._emit("open");
 						ms.authenticateSocket(socket._socket);
-						assert.isTrue(socket._onreconnect.called, "Socket onreconnect callback called");
+						assert.isTrue(socket._emitter.emit.called, "Socket onreconnect callback called");
 						assert.notOk(socket._closed, "Socket knows it's open again");
 						assert.notOk(socket._connectTimer, "Socket is not trying to reconnect again");
 						assert.lengthOf(ms._requests, 0, "Socket did not make any more http requests");
 						assert.lengthOf(socket._socket._frames, 0, "Socket did not make any more ws requests");
-						done();
+						done();						
 					}, (socket._connectDelay / 5) + 5);
 					assert.lengthOf(ms._requests, 0, "Socket will defer reconnect attempts");
 				});
