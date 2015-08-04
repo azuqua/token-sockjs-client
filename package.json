@@ -48,7 +48,7 @@
     "async": "^0.9.0",
     "lodash": "^2.4.1",
     "node-uuid": "^1.4.1",
-    "restjs": "azuqua/restjs",
+    "restjs": "azuqua/restjs#fix-stuff",
     "sockjs-client-ws": "^0.1.0"
   }
 }
