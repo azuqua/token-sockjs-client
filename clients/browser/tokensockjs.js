@@ -4,77 +4,75 @@
 		MIN_DELAY = 10,
 		dt = 5;
 
-	var nextDelay = function(last){
+	function nextDelay(last){
 		return Math.min(last * dt, MAX_DELAY);
-	};
- 
+	}
+
 	var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	var uuid = function(){
+	function uuid(){
 		var i, out = "";
 		for(i = 0; i < 10; i++)
 			out += chars.charAt(Math.random() * chars.length | 0);
 		return out;
-	};
+	}
 
-	Object.size = function(obj){
+	function objectSize(obj){
 		var size = 0, key;
 		for(key in obj){
 			if(obj.hasOwnProperty(key)) size++;
 		}
 		return size;
-	};
+	}
 
-	Object.shallowCopy = function(obj){
+	function shallowCopy(obj){
 		var key, copy = {};
 		for(key in obj){
 			if(obj.hasOwnProperty(key))
 				copy[key] = obj[key];
 		}
 		return copy;
-	};
+	}
 
 	// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
-	if (!Object.keys) {
-		Object.keys = (function() {
-			'use strict';
-			var hasOwnProperty = Object.prototype.hasOwnProperty,
-			hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
-			dontEnums = [
-				'toString',
-				'toLocaleString',
-				'valueOf',
-				'hasOwnProperty',
-				'isPrototypeOf',
-				'propertyIsEnumerable',
-				'constructor'
-			],
-			dontEnumsLength = dontEnums.length;
+	var keys = (function() {
+		'use strict';
+		var hasOwnProperty = Object.prototype.hasOwnProperty,
+		hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+		dontEnums = [
+			'toString',
+			'toLocaleString',
+			'valueOf',
+			'hasOwnProperty',
+			'isPrototypeOf',
+			'propertyIsEnumerable',
+			'constructor'
+		],
+		dontEnumsLength = dontEnums.length;
 
-			return function(obj) {
-				if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
-					throw new TypeError('Object.keys called on non-object');
+		return function keys(obj) {
+			if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
+				throw new TypeError('Object.keys called on non-object');
+			}
+
+			var result = [], prop, i;
+
+			for (prop in obj) {
+				if (hasOwnProperty.call(obj, prop)) {
+					result.push(prop);
 				}
+			}
 
-				var result = [], prop, i;
-
-				for (prop in obj) {
-					if (hasOwnProperty.call(obj, prop)) {
-						result.push(prop);
+			if (hasDontEnumBug) {
+				for (i = 0; i < dontEnumsLength; i++) {
+					if (hasOwnProperty.call(obj, dontEnums[i])) {
+						result.push(dontEnums[i]);
 					}
 				}
+			}
+			return result;
+		};
+	}());
 
-				if (hasDontEnumBug) {
-					for (i = 0; i < dontEnumsLength; i++) {
-						if (hasOwnProperty.call(obj, dontEnums[i])) {
-							result.push(dontEnums[i]);
-						}
-					}
-				}
-				return result;
-			};
-		}());
-	}
- 
 	var Monitor = function(socket, emitter){
 		this._socket = socket;
 		this._inTransit = {};
@@ -101,7 +99,7 @@
 			else
 				fn(null, data.resp);
 			delete this._inTransit[data.rpc][data.uuid];
-			if(Object.size(this._inTransit[data.rpc]) === 0)
+			if(objectSize(this._inTransit[data.rpc]) === 0)
 				delete this._inTransit[data.rpc];
 		}else if(data.channel){
 			this._emitter.emit("message", data.channel, data.message);
@@ -167,7 +165,7 @@
 	};
 
 	var request = function(options, data, callback){
-		options = Object.shallowCopy(options);
+		options = shallowCopy(options);
 		if(options.dataType && options.dataType.toLowerCase() === "jsonp"){
 			var callbackKey = "token_callback_" + new Date().getTime() + "_" + (Math.round(Math.random() * 1e16)).toString(36);
 			var script = global.document.createElement("script");
@@ -284,7 +282,7 @@
 		var self = this;
 		self._emitter = new EventEmitter();
 
-		Object.keys(EventEmitter.prototype).forEach(function(k){
+		keys(EventEmitter.prototype).forEach(function(k){
 			self[k] = self._emitter[k];
 		});
 
@@ -334,7 +332,7 @@
 	};
 
 	TokenSocket.prototype.channels = function(){
-		return Object.keys(this._channels);
+		return keys(this._channels);
 	};
 
 	// @rpc is the controller action
