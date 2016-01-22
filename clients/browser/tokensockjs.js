@@ -103,7 +103,7 @@
 			delete this._inTransit[data.rpc][data.uuid];
 			if(Object.size(this._inTransit[data.rpc]) === 0)
 				delete this._inTransit[data.rpc];
-		}else if(data.channel){
+		}if(data.channel){
 			this._emitter.emit("message", data.channel, data.message);
 		}
 	};
@@ -352,14 +352,14 @@
 		this._actions = actions;
 	};
 
-	TokenSocket.prototype.subscribe = function(channel){
+	TokenSocket.prototype.subscribe = function(channel, callback){
 		var self = this;
 		checkAndUseConnection(self, function(){
 			self._channels[channel] = true;
 			self._monitor.sendMessage({
 				rpc: "_subscribe",
 				req: { channel: channel }
-			});
+			}, callback);
 		});
 	};
 
