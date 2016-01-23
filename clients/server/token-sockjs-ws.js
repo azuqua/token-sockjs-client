@@ -30,7 +30,7 @@ Monitor.prototype.sendMessage = function(data, callback){
   data.uuid = uuid.v4();
   if(!this._inTransit[data.rpc])
     this._inTransit[data.rpc] = {};
-  this._inTransit[data.rpc][data.uuid] = callback;
+  this._inTransit[data.rpc][data.uuid] = callback || _.noop;
   this._socket.write(JSON.stringify(data));
 };
 
@@ -308,18 +308,18 @@ TokenSocket.prototype.subscribe = function(channel, callback){
   });
 };
 
-TokenSocket.prototype.unsubscribe = function(channel){
+TokenSocket.prototype.unsubscribe = function(channel, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     delete self._channels[channel];
     self._monitor.sendMessage({
       rpc: "_unsubscribe",
       req: { channel: channel }
-    });
+    }, callback);
   });
 };
 
-TokenSocket.prototype.publish = function(channel, data){
+TokenSocket.prototype.publish = function(channel, data, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     self._monitor.sendMessage({
@@ -328,17 +328,17 @@ TokenSocket.prototype.publish = function(channel, data){
         channel: channel,
         data: data
       }
-    });
+    }, callback);
   });
 };
 
-TokenSocket.prototype.broadcast = function(data){
+TokenSocket.prototype.broadcast = function(data, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     self._monitor.sendMessage({
       rpc: "_broadcast",
       req: { data: data }
-    });
+    }, callback);
   });
 };
 

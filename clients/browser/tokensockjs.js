@@ -4,6 +4,10 @@
 		MIN_DELAY = 10,
 		dt = 5;
 
+	var emitterFunctions = ["on", "addListener", "removeListener", "removeAllListeners"];
+
+	var noop = function(){};
+
 	var nextDelay = function(last){
 		return Math.min(last * dt, MAX_DELAY);
 	};
@@ -87,7 +91,7 @@
 		data.uuid = uuid();
 		if(!this._inTransit[data.rpc])
 			this._inTransit[data.rpc] = {};
-		this._inTransit[data.rpc][data.uuid] = callback;
+		this._inTransit[data.rpc][data.uuid] = callback || noop;
 		this._socket.send(JSON.stringify(data));
 	};
  
@@ -284,8 +288,8 @@
 		var self = this;
 		self._emitter = new EventEmitter();
 
-		Object.keys(EventEmitter.prototype).forEach(function(k){
-			self[k] = self._emitter[k];
+		emitterFunctions.forEach(function(fn){
+			self[fn] = self._emitter[fn];
 		});
 
 		self._closed = true;
@@ -363,18 +367,18 @@
 		});
 	};
 
-	TokenSocket.prototype.unsubscribe = function(channel){
+	TokenSocket.prototype.unsubscribe = function(channel, callback){
 		var self = this;
 		checkAndUseConnection(self, function(){
 			delete self._channels[channel];
 			self._monitor.sendMessage({
 				rpc: "_unsubscribe",
 				req: { channel: channel }
-			});
+			}, callback);
 		});
 	};
 
-	TokenSocket.prototype.publish = function(channel, data){
+	TokenSocket.prototype.publish = function(channel, data, callback){
 		var self = this;
 		checkAndUseConnection(self, function(){
 			self._monitor.sendMessage({
@@ -383,17 +387,17 @@
 					channel: channel,
 					data: data
 				}
-			});
+			}, callback);
 		});
 	};
 
-	TokenSocket.prototype.broadcast = function(data){
+	TokenSocket.prototype.broadcast = function(data, callback){
 		var self = this;
 		checkAndUseConnection(self, function(){
 			self._monitor.sendMessage({
 				rpc: "_broadcast",
 				req: { data: data }
-			});
+			}, callback);
 		});
 	};
 
