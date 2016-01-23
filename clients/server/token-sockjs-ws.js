@@ -30,7 +30,7 @@ Monitor.prototype.sendMessage = function(data, callback){
   data.uuid = uuid.v4();
   if(!this._inTransit[data.rpc])
     this._inTransit[data.rpc] = {};
-  this._inTransit[data.rpc][data.uuid] = callback;
+  this._inTransit[data.rpc][data.uuid] = callback || _.noop;
   this._socket.write(JSON.stringify(data));
 };
 
@@ -46,7 +46,8 @@ Monitor.prototype.handleResponse = function(data){
     delete this._inTransit[data.rpc][data.uuid];
     if(Object.keys(this._inTransit[data.rpc]).length === 0)
       delete this._inTransit[data.rpc];
-  }else if(data.channel){
+  }
+  if(data.channel){
     this._emitter.emit("message", data.channel, data.message);
   }
 };
@@ -296,29 +297,29 @@ TokenSocket.prototype.register = function(actions){
   this._actions = actions;
 };
 
-TokenSocket.prototype.subscribe = function(channel){
+TokenSocket.prototype.subscribe = function(channel, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     self._channels[channel] = true;
     self._monitor.sendMessage({
       rpc: "_subscribe",
       req: { channel: channel }
-    });
+     }, callback);
   });
 };
 
-TokenSocket.prototype.unsubscribe = function(channel){
+TokenSocket.prototype.unsubscribe = function(channel, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     delete self._channels[channel];
     self._monitor.sendMessage({
       rpc: "_unsubscribe",
       req: { channel: channel }
-    });
+    }, callback);
   });
 };
 
-TokenSocket.prototype.publish = function(channel, data){
+TokenSocket.prototype.publish = function(channel, data, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     self._monitor.sendMessage({
@@ -327,17 +328,17 @@ TokenSocket.prototype.publish = function(channel, data){
         channel: channel,
         data: data
       }
-    });
+    }, callback);
   });
 };
 
-TokenSocket.prototype.broadcast = function(data){
+TokenSocket.prototype.broadcast = function(data, callback){
   var self = this;
   checkAndUseConnection(self, function(){
     self._monitor.sendMessage({
       rpc: "_broadcast",
       req: { data: data }
-    });
+    }, callback);
   });
 };
 
