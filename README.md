@@ -10,8 +10,8 @@ The browser client does not require any external dependencies other than [sockjs
 The Azuqua CDN also hosts a minified copy of each version.
 
 ```
-<script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
-<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.1.0.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.0.3/sockjs.min.js"></script>
+<script src="//d78vv2h34ll3s.cloudfront.net/tokensockjs-2.2.0.min.js"></script>
 ```
 
 ## API Overview
