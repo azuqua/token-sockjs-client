@@ -5,7 +5,7 @@
         root,
         exports,
         require('events').EventEmitter,
-        require('sockjs-client-ws')
+        require('sockjs-client')
     );
 }(typeof window === "undefined" ? {} : window, function (root, Module, EventEmitter, SockJS) {
     'use strict';

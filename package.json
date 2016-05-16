@@ -45,9 +45,11 @@
   },
   "dependencies": {
     "async": "^1.5.2",
+    "events": "^1.1.0",
     "lodash": "^4.0.0",
     "node-uuid": "^1.4.1",
     "restjs": "azuqua/restjs",
+    "sockjs-client": "^1.1.0",
     "sockjs-client-ws": "^0.1.0"
   }
 }
