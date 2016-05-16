@@ -4,9 +4,10 @@
     module.exports = factory(
         root,
         exports,
-        require('events').EventEmitter
+        require('events').EventEmitter,
+        require('sockjs-client-ws')
     );
-}(typeof window === "undefined" ? {} : window, function (root, Module, EventEmitter) {
+}(typeof window === "undefined" ? {} : window, function (root, Module, EventEmitter, SockJS) {
     'use strict';
 
     var MAX_DELAY = 5 * 1000,
@@ -239,7 +240,7 @@
             }
 
             tokenSocket._token = resp.token;
-            tokenSocket._socket = new global.SockJS(tokenSocket._apiRoute + tokenSocket._socketPrefix, null, tokenSocket._sockjs);
+            tokenSocket._socket = new SockJS(tokenSocket._apiRoute + tokenSocket._socketPrefix, null, tokenSocket._sockjs);
             tokenSocket._socket.onopen = function(){
                 tokenSocket._monitor.sendMessage({
                     rpc: "auth",
