@@ -4,10 +4,9 @@
     module.exports = factory(
         root,
         exports,
-        require('../libs/math.js'),
-        require('underscore')
+        require('events').EventEmitter
     );
-}(typeof window === "undefined" ? {} : window, function (root, Module, math) {
+}(typeof window === "undefined" ? {} : window, function (root, Module, EventEmitter) {
     'use strict';
 
     var MAX_DELAY = 5 * 1000,
