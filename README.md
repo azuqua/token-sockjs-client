@@ -3,6 +3,8 @@ Token Sockjs Clients
 
 The client libraries for [node-token-sockjs](https://github.com/azuqua/node-token-sockjs). These modules provide additional websocket functionality on top of [sockjs](https://github.com/sockjs). If required in a node environment this module will export the node.js client library. To access the browser version require the browser client file directly.
 
+[![Build Status](https://travis-ci.org/azuqua/token-sockjs-client.svg?branch=master)](https://travis-ci.org/azuqua/token-sockjs-client)
+
 # Browser Client
 
 The browser client does not require any external dependencies other than [sockjs](https://github.com/sockjs/sockjs-client). 
