@@ -2,7 +2,7 @@
 var _            = require("lodash"),
     async        = require("async"),
     url          = require("url"),
-    uuid         = require("node-uuid"),
+    uuid         = require("uuid"),
     WS           = require("sockjs-client-ws"),
     RestJS       = require("restjs"),
     EventEmitter = require("events").EventEmitter;
