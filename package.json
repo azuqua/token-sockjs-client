@@ -1,6 +1,6 @@
 {
   "name": "token-sockjs-client",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Client libraries for Node-Token-Sockjs server",
   "main": "index.js",
   "scripts": {
