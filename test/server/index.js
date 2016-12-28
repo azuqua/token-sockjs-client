@@ -4,7 +4,7 @@ var proxyquire = require("proxyquire"),
 
 var	TokenSocket = proxyquire("../../index", { 
 	"restjs": mocks.RestJS,
-	"sockjs-client-ws": mocks.WS
+	"sockjs-client": mocks.WS
 });
 
 describe("Node.js client tests", function(){

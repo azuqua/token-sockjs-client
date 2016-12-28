@@ -24,7 +24,7 @@ module.exports = function(TokenSocket, mocks){
 				assert.include(httpReq.options.path, "foo=bar", "HTTP token request has authentication params");
 				mocks.server.respondWithJSON(httpReq, 200, { token: token });
 				assert.ok(socket._socket, "Socket created sockjs websocket");
-				socket._socket._emit("connection");
+				socket._socket._emit("open");
 				assert.equal(socket._socket._frames.length, 1, "Socket made ws auth request");
 				var socketReq = JSON.parse(socket._socket._frames[0]);
 				assert.equal(socketReq.rpc, "auth", "Socket made auth rpc request");
@@ -61,7 +61,7 @@ module.exports = function(TokenSocket, mocks){
 				socket._emitter.emit = sinon.spy(socket._emitter.emit);
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
-				socket._socket._emit("connection");
+				socket._socket._emit("open");
 				mocks.server.authenticateSocket(socket._socket);
 			});
 
@@ -112,7 +112,7 @@ module.exports = function(TokenSocket, mocks){
 						args: data
 					}
 				};
-				socket._socket._emit("data", JSON.stringify(wrapper));
+				socket._socket._emit("message", JSON.stringify(wrapper));
 				assert.isTrue(socket._actions.ping.called, "Socket ping fn was called");
 				var socketResp = socket._socket._frames.shift();
 				assert.ok(socketResp, "Socket response is there");
@@ -143,7 +143,7 @@ module.exports = function(TokenSocket, mocks){
 						args: data
 					}
 				};
-				socket._socket._emit("data", JSON.stringify(wrapper));
+				socket._socket._emit("message", JSON.stringify(wrapper));
 				assert.isTrue(socket._actions.nested.ping.called, "Socket nested ping fn was called");
 				var socketResp = socket._socket._frames.shift();
 				assert.ok(socketResp, "Socket response is there");
@@ -175,7 +175,7 @@ module.exports = function(TokenSocket, mocks){
 						}, freq + 10);
 					});
 					mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
-					socket._socket._emit("connection");
+					socket._socket._emit("open");
 					mocks.server.authenticateSocket(socket._socket);
 				});
 			});
@@ -193,7 +193,7 @@ module.exports = function(TokenSocket, mocks){
 				socket._emitter.emit = sinon.spy(socket._emitter.emit);
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
-				socket._socket._emit("connection");
+				socket._socket._emit("open");
 				mocks.server.authenticateSocket(socket._socket);
 			});
 
@@ -219,7 +219,7 @@ module.exports = function(TokenSocket, mocks){
 					assert.deepEqual(_message, message, "OnMessage fn has correct message");
 				});
 				socket._emitter.emit.reset();
-				socket._socket._emit("data", JSON.stringify(data));
+				socket._socket._emit("message", JSON.stringify(data));
 				assert.isTrue(socket._emitter.emit.called, "Message callback was called");
 				assert.lengthOf(socket._socket._frames, startingFrames, "Socket did not make any requests");
 			});
@@ -254,12 +254,12 @@ module.exports = function(TokenSocket, mocks){
 				assert.lengthOf(socket._socket._frames, 0, "Socket does not have any outstanding requests");
 				assert.lengthOf(Object.keys(socket._channels), 0, "Socket does not have any channels");
 				
-				socket._socket._emit("data", JSON.stringify(wrapper));
+				socket._socket._emit("message", JSON.stringify(wrapper));
 				assert.property(socket._channels, channel, "Socket is subscribed to channel");
 				assert.lengthOf(socket._socket._frames, 0, "Socket did not try to respond");
 
 				wrapper.command = "unsubscribe";
-				socket._socket._emit("data", JSON.stringify(wrapper));
+				socket._socket._emit("message", JSON.stringify(wrapper));
 				assert.notOk(socket._channels[channel], "Socket is not subscribed to channel");
 				assert.lengthOf(socket._socket._frames, 0, "Socket still didnt try to respond");
 			});
@@ -299,7 +299,7 @@ module.exports = function(TokenSocket, mocks){
 				socket._emitter.emit = sinon.spy(socket._emitter.emit);
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
-				socket._socket._emit("connection");
+				socket._socket._emit("open");
 				mocks.server.authenticateSocket(socket._socket);
 			});
 
@@ -335,7 +335,7 @@ module.exports = function(TokenSocket, mocks){
 				// so below it'll get halved to avoid waiting twice as long as needed
 				setTimeout(function(){
 					mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "foo" });
-					socket._socket._emit("connection");
+					socket._socket._emit("open");
 					mocks.server.authenticateSocket(socket._socket);
 					assert.notOk(socket._closed, "Socket is open again");
 					assert.lengthOf(socket._queue, 0, "Socket request queue is empty");
@@ -375,7 +375,7 @@ module.exports = function(TokenSocket, mocks){
 					assert.equal(httpReq.options.host, socket._host);
 					assert.include(httpReq.options.path, socket._tokenPath, "HTTP route contains socket token route");
 					mocks.server.respondWithJSON(httpReq, 200, { token: "foo" });
-					socket._socket._emit("connection");
+					socket._socket._emit("open");
 					mocks.server.authenticateSocket(socket._socket);
 					assert.isTrue(socket._emitter.emit.called, "Socket onreconnect callback called");
 					assert.notOk(socket._closed, "Socket knows it's open again");

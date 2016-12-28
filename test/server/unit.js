@@ -39,7 +39,7 @@ module.exports = function(TokenSocket, mocks){
 				var req = socket._rest._requests.shift();
 				assert.ok(req, "HTTP request exists");
 				mocks.server.respondWithJSON(req, 200, { token: token });
-				socket._socket._emit("connection");
+				socket._socket._emit("open");
 				var socketReq = socket._socket._frames.shift();
 				assert.ok(socketReq, "Socket has auth frame");
 				socketReq = JSON.parse(socketReq);
@@ -63,7 +63,7 @@ module.exports = function(TokenSocket, mocks){
 						foo: function(){}	
 					});
 					mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "abc123" });
-					socket._socket._emit("connection");
+					socket._socket._emit("open");
 					mocks.server.authenticateSocket(socket._socket);
 				}, "Constructor does not throw when provided all possible arguments");
 			});
@@ -80,7 +80,7 @@ module.exports = function(TokenSocket, mocks){
 				socket = new TokenSocket({ host: "foo.com" });
 				socket.ready(done);
 				mocks.server.respondWithJSON(socket._rest._requests.shift(), 200, { token: "abc123" });
-				socket._socket._emit("connection");
+				socket._socket._emit("open");
 				mocks.server.authenticateSocket(socket._socket);
 			});
 

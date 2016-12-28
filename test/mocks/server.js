@@ -12,34 +12,26 @@ var MockSocketFactory = function(){
 
 	_.extend(_Socket.prototype, {
 
-		write: function(data){
+		send: function(data){
 			if(typeof data !== "string")
 				throw "Invalid data type for socket send";
 			this._frames.push(data);
 		},
 
 		_emit: function(evt, data){
-			if(evt && typeof this._events[evt] === "function")
-				this._events[evt](data);
+			if(evt && typeof this["on" + evt] === "function")
+				this["on" + evt](data ? { data: data } : undefined);
 		},
 
 		close: function(callback){
 			setTimeout(function(){
 				this._emit("close");
 			}.bind(this), 0);
-		},
-
-		on: function(evt, callback){
-			this._events[evt] = callback;
 		}
+
 	});
 
-
-	return {
-		create: function(path){
-			return new _Socket(path);
-		}
-	};
+	return _Socket;
 };
 
 
@@ -56,7 +48,7 @@ module.exports = {
 			if(typeof req === "string")
 				req = JSON.parse(req);
 			req.resp = "success";
-			socket._emit("data", JSON.stringify(req));
+			socket._emit("message", JSON.stringify(req));
 			if(callback) callback();
 		},
 
@@ -71,7 +63,7 @@ module.exports = {
 					for(m in mixins)
 						req[m] = mixins[m];
 				}
-				socket._emit("data", JSON.stringify(req));
+				socket._emit("message", JSON.stringify(req));
 			});
 		}
 

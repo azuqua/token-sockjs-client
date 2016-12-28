@@ -3,7 +3,7 @@ var _            = require("lodash"),
     async        = require("async"),
     url          = require("url"),
     uuid         = require("uuid"),
-    WS           = require("sockjs-client-ws"),
+    SockJS       = require("sockjs-client"),
     RestJS       = require("restjs"),
     EventEmitter = require("events").EventEmitter;
 
@@ -31,7 +31,7 @@ Monitor.prototype.sendMessage = function(data, callback){
   if(!this._inTransit[data.rpc])
     this._inTransit[data.rpc] = {};
   this._inTransit[data.rpc][data.uuid] = callback || _.noop;
-  this._socket.write(JSON.stringify(data));
+  this._socket.send(JSON.stringify(data));
 };
 
 Monitor.prototype.handleResponse = function(data){
@@ -63,7 +63,7 @@ var rpcResponse = function(error, resp, instance, data){
     fid: data.fid,
     resp: res
   };
-  instance._socket.write(JSON.stringify(out));
+  instance._socket.send(JSON.stringify(out));
 };
 
 var handleInternal = function(instance, command, data){
@@ -135,8 +135,10 @@ var resetConnection = function(tokenSocket, callback){
     }
 
     tokenSocket._token = resp.token;
-    tokenSocket._socket = WS.create(tokenSocket._protocol + "//" + tokenSocket._host + ":" + tokenSocket._port + tokenSocket._socketPrefix);
-    tokenSocket._socket.on("connection", function(){
+    tokenSocket._socket = new SockJS(tokenSocket._protocol + "//" + tokenSocket._host + ":" + tokenSocket._port 
+      + tokenSocket._socketPrefix);
+
+    tokenSocket._socket.onopen = function(){
       tokenSocket._monitor.sendMessage({
         rpc: "auth",
         token: tokenSocket._token
@@ -153,27 +155,26 @@ var resetConnection = function(tokenSocket, callback){
           callback();
         }
       });
-    });
+    };
+
     tokenSocket._monitor = new Monitor(tokenSocket._socket, tokenSocket._emitter);
-    tokenSocket._socket.on("data", function(data){
+
+    tokenSocket._socket.onmessage = function(e){
       try{
-        if(typeof data === "string")
-          data = JSON.parse(data);
-      }catch(e){ return; }
-      if(data.internal)
-        handleInternal(tokenSocket, data.command, data.data);
-      else
-        tokenSocket._monitor.handleResponse(data);
-    });
-    tokenSocket._socket.on("error", function(){
-      tokenSocket._closed = true;
-      tokenSocket._socket.close();
-    });
-    tokenSocket._socket.on("close", function(){
+        e.data = JSON.parse(e.data);
+      }catch(ev){ return; }
+      if(e.data.internal)
+        handleInternal(tokenSocket, e.data.command, e.data.data);
+      else  
+        tokenSocket._monitor.handleResponse(e.data);
+    };
+
+    tokenSocket._socket.onclose = function(){
       tokenSocket._closed = true;
       if(tokenSocket._reconnect)
         attemptReconnect(tokenSocket);
-    });
+    };
+
   });
 };
 
@@ -351,7 +352,7 @@ TokenSocket.prototype.end = function(callback){
   this._emitter.removeAllListeners("reconnect");
   this._emitter.removeAllListeners("message");
   this._closed = true;
-  this._socket.on("close", callback);
+  this._socket.onclose = callback;
   this._socket.close();
 };
 
