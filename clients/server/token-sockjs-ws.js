@@ -214,6 +214,9 @@ var TokenSocket = function(options, actions){
 
   var parsed = url.parse(options.host);
   options.protocol = parsed.protocol === "https:" ? "https:" : "http:";
+  if (parsed.protocol) {
+    options.host = parsed.host;
+  }
 
   if(!options.port){
     var parts = options.host.split(":");

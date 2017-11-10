@@ -46,7 +46,15 @@ module.exports = function(TokenSocket, mocks){
 				assert.property(socketReq, "token", "Socket auth request has token property");
 				assert.equal(socketReq.token, token, "Socket auth request has correct token");
 			});
-
+			
+			it("Should create a valid socket URL when passed a host argument that includes protocol", function(){
+				assert.doesNotThrow(function(){
+					var socket = new TokenSocket({ host: 'http://foo.com'	});
+					var req = socket._rest._requests.shift();
+					assert.isOk(req.options.host.indexOf('http') === -1, 'parsed host does not include protocol');
+				}, "Constructor does not create an invalid url when passed a host argument that includes protocol");
+			});
+			
 			it("Should not throw an error when created with all possible arguments", function(done){
 				assert.doesNotThrow(function(){
 					var socket = new TokenSocket({
