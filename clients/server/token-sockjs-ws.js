@@ -136,7 +136,7 @@ var resetConnection = function(tokenSocket, callback){
 
     tokenSocket._token = resp.token;
     tokenSocket._socket = new SockJS(tokenSocket._protocol + "//" + tokenSocket._host + ":" + tokenSocket._port 
-      + tokenSocket._socketPrefix);
+      + tokenSocket._socketPrefix, [], tokenSocket._sockjs);
 
     tokenSocket._socket.onopen = function(){
       tokenSocket._monitor.sendMessage({
@@ -235,6 +235,7 @@ var TokenSocket = function(options, actions){
   }, options);
 
   _.extend(self, {
+    _sockjs: options.sockjs,
     _connectDelay: MIN_DELAY,
     _connectTimer: null,
     _actions: actions || {},
