@@ -261,6 +261,7 @@ var TokenSocket = function(options, actions){
     method: "GET",
     protocol: options.protocol,
     host: options.host,
+    headers: options.headers || {},
     path: self._tokenPath,
     port: options.port
   };
