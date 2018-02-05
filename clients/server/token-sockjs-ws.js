@@ -37,7 +37,8 @@ Monitor.prototype.sendMessage = function(data, callback){
 Monitor.prototype.handleResponse = function(data){
   var fn = null;
   if(data.rpc && data.uuid)
-    fn = this._inTransit[data.rpc][data.uuid];
+    // Throws an error if a response is invalid.
+    if(this._inTransit[data.rpc]) fn = this._inTransit[data.rpc][data.uuid];
   if(fn && typeof fn === "function"){
     if(data.error)
       fn(data.error);
