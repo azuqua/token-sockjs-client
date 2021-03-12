@@ -1,6 +1,6 @@
 {
   "name": "token-sockjs-client",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "Client libraries for Node-Token-Sockjs server",
   "main": "index.js",
   "scripts": {
@@ -46,7 +46,7 @@
   "dependencies": {
     "async": "^1.5.2",
     "lodash": "^4.0.0",
-    "restjs": "azuqua/restjs",
+    "restjs": "git+ssh://git@github.com:azuqua/restjs#v0.1.0",
     "sockjs-client": "^1.1.1",
     "uuid": "^3.0.0"
   }
