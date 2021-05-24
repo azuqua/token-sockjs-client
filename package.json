@@ -1,6 +1,6 @@
 {
   "name": "token-sockjs-client",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "description": "Client libraries for Node-Token-Sockjs server",
   "main": "index.js",
   "scripts": {
@@ -30,7 +30,7 @@
   "devDependencies": {
     "browserify": "^13.0.0",
     "chai": "^3.4.1",
-    "grunt": "^0.4.5",
+    "grunt": "^1.4.1",
     "grunt-browserify": "^3.2.0",
     "grunt-contrib-clean": "^0.7.0",
     "grunt-contrib-jshint": "^0.12.0",
@@ -39,8 +39,8 @@
     "grunt-mocha-test": "^0.12.3",
     "mocha": "^2.0.1",
     "mocha-phantomjs": "^4.0.2",
-    "sinon": "^1.12.1",
     "proxyquire": "^1.1.0",
+    "sinon": "^1.12.1",
     "wolfy87-eventemitter": "^4.2.11"
   },
   "dependencies": {

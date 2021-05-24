@@ -95,7 +95,7 @@
 		this._socket.send(JSON.stringify(data));
 	};
  
-	Monitor.prototype.handleResponse = function(data){
+	Monitor.prototype.callCallback = function(data){
 		var fn = null;
 		if(data.rpc && data.uuid)
 			fn = this._inTransit[data.rpc][data.uuid];
@@ -107,7 +107,12 @@
 			delete this._inTransit[data.rpc][data.uuid];
 			if(Object.size(this._inTransit[data.rpc]) === 0)
 				delete this._inTransit[data.rpc];
-		}if(data.channel){
+		}
+	};
+
+	Monitor.prototype.handleResponse = function(data){
+		this.callCallback(data);
+		if (data.channel) {
 			this._emitter.emit("message", data.channel, data.message);
 		}
 	};
@@ -129,6 +134,7 @@
 	var handleInternal = function(instance, command, data){
 		if(command === "subscribe"){
 			instance._channels[data.channel] = true;
+			instance._monitor.callCallback(data);
 		}else if(command === "unsubscribe"){
 			delete instance._channels[data.channel];
 		}else if(command === "rpc"){
