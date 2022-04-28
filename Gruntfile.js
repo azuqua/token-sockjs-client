@@ -38,25 +38,17 @@ module.exports = function(grunt){
         mochaTest: {
         	options: { reporter: "spec", checkLeaks: true },
 	        src: ["test/server/index.js"]
-        },
-
-        mocha_phantomjs: {
-    		all: [
-    			"test/browser/unit.html", 
-    			"test/browser/integration.html"
-    		]
-  		}
+        }
         
 	});
 
 	grunt.loadNpmTasks("grunt-browserify");
-	grunt.loadNpmTasks("grunt-mocha-phantomjs");
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-jshint");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
 	grunt.loadNpmTasks("grunt-mocha-test");
 
-	grunt.registerTask("test", ["mochaTest", "mocha_phantomjs"]);
+	grunt.registerTask("test", ["mochaTest"]);
 	grunt.registerTask("lint", ["jshint"]);
 	grunt.registerTask("compress", ["uglify"]);
 	grunt.registerTask("debug", ["clean", "lint", "browserify", "test"]);

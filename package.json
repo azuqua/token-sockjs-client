@@ -35,10 +35,8 @@
     "grunt-contrib-clean": "^0.7.0",
     "grunt-contrib-jshint": "^0.12.0",
     "grunt-contrib-uglify": "^0.11.0",
-    "grunt-mocha-phantomjs": "^2.0.1",
     "grunt-mocha-test": "^0.12.3",
     "mocha": "^2.0.1",
-    "mocha-phantomjs": "^4.0.2",
     "proxyquire": "^1.1.0",
     "sinon": "^1.12.1",
     "wolfy87-eventemitter": "^4.2.11"
