@@ -7,7 +7,7 @@ var	TokenSocket = proxyquire("../../index", {
 	"sockjs-client": mocks.WS
 });
 
-describe("Node.js client tests", function(){
+describe("Node.js (server) client tests", function(){
 	require("./unit")(TokenSocket, mocks);
 	require("./integration")(TokenSocket, mocks);
 });
