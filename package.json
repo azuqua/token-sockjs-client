@@ -43,10 +43,9 @@
     "wolfy87-eventemitter": "^4.2.11"
   },
   "dependencies": {
-    "async": "^1.5.2",
     "lodash": "^4.17.12",
     "restjs": "git+ssh://git@github.com:azuqua/restjs#v0.1.0",
-    "sockjs-client": "^1.1.1",
+    "sockjs-client": "^1.6.1",
     "uuid": "^3.0.0"
   }
 }

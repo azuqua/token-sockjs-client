@@ -1,6 +1,5 @@
 
 var _            = require("lodash"),
-    async        = require("async"),
     url          = require("url"),
     uuid         = require("uuid"),
     SockJS       = require("sockjs-client"),
