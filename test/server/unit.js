@@ -1,7 +1,6 @@
 
 
 var _ = require("lodash"),
-	sinon = require("sinon"),
 	assert = require("chai").assert;
 
 module.exports = function(TokenSocket, mocks){

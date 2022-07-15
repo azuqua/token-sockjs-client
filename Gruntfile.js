@@ -13,7 +13,6 @@ module.exports = function(grunt){
 				"Gruntfile.js",
 				"clients/**/*.js",
 				"test/server/**/*.js",
-				"test/browser/**/*.js",
 				"test/mocks/*.js"
 			]
 		},

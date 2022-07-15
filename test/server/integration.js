@@ -218,7 +218,7 @@ module.exports = function(TokenSocket, mocks){
 					assert.equal(_channel, channel, "OnMessage fn has correct channel");
 					assert.deepEqual(_message, message, "OnMessage fn has correct message");
 				});
-				socket._emitter.emit.reset();
+				socket._emitter.emit.resetHistory();
 				socket._socket._emit("message", JSON.stringify(data));
 				assert.isTrue(socket._emitter.emit.called, "Message callback was called");
 				assert.lengthOf(socket._socket._frames, startingFrames, "Socket did not make any requests");

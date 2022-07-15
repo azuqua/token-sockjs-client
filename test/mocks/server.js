@@ -1,6 +1,5 @@
 
-var sinon = require("sinon"),
-	_ = require("lodash");
+var _ = require("lodash");
 
 var MockSocketFactory = function(){
 

@@ -1,12 +1,12 @@
-const path = require('path');
-const chai = require('chai');
+var path = require('path');
+var chai = require('chai');
 
-const MochaChrome = require('mocha-chrome');
+var MochaChrome = require('mocha-chrome');
 
-const { expect } = chai;
+var { expect } = chai;
 
 function test(options) {
-  const url = `file://${path.join(__dirname, `${options.file}.html`)}`;
+  var url = `file://${path.join(__dirname, `${options.file}.html`)}`;
 
   options = {
       url,
@@ -17,8 +17,8 @@ function test(options) {
       ...options
   };
 
-  const runner = new MochaChrome(options);
-  const result = new Promise((resolve, reject) => {
+  var runner = new MochaChrome(options);
+  var result = new Promise((resolve, reject) => {
     runner.on('ended', (stats) => {
       resolve(stats);
     });
